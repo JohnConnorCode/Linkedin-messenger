@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  runner:
+    build:
+      context: ./runner
+      dockerfile: Dockerfile
+    environment:
+      - RUNNER_ID=runner-1
+      - RUNNER_TOKEN=${RUNNER_TOKEN}
+      - API_BASE_URL=${API_BASE_URL:-http://host.docker.internal:3000/api/runner}
+      - USER_DATA_DIR=/home/pwuser/linkedin-sessions
+      - USER_TIMEZONE=${USER_TIMEZONE:-Asia/Singapore}
+      - LOG_LEVEL=info
+      - DISPLAY=:99
+    volumes:
+      - linkedin-sessions:/home/pwuser/linkedin-sessions
+      - ./runner/logs:/app/logs
+    restart: unless-stopped
+    network_mode: host
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+volumes:
+  linkedin-sessions:
+    driver: local

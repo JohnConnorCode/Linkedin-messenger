@@ -1,0 +1,58 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "LinkedIn Messenger" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Automate your LinkedIn outreach with personalized messaging campaigns, smart scheduling, and powerful analytics
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - img [ref=e10]
+        - heading "Personalized Messages" [level=3] [ref=e12]
+        - paragraph [ref=e13]: Create message templates with variables that automatically personalize for each recipient using their LinkedIn data
+      - generic [ref=e14]:
+        - img [ref=e15]
+        - heading "Smart Targeting" [level=3] [ref=e20]
+        - paragraph [ref=e21]: Import and manage your LinkedIn connections with tags, filters, and custom fields for targeted campaigns
+      - generic [ref=e22]:
+        - img [ref=e23]
+        - heading "Semi-Automated Sending" [level=3] [ref=e25]
+        - paragraph [ref=e26]: Queue messages for manual approval before sending to maintain control and LinkedIn compliance
+      - generic [ref=e27]:
+        - img [ref=e28]
+        - heading "Safety Features" [level=3] [ref=e30]
+        - paragraph [ref=e31]: Built-in rate limiting and manual review steps to help protect your LinkedIn account
+      - generic [ref=e32]:
+        - img [ref=e33]
+        - heading "Campaign Analytics" [level=3] [ref=e35]
+        - paragraph [ref=e36]: Track sent messages, response rates, and campaign performance metrics
+      - generic [ref=e37]:
+        - img [ref=e38]
+        - heading "Scheduled Campaigns" [level=3] [ref=e41]
+        - paragraph [ref=e42]: Set daily and hourly sending limits to control message flow and avoid spam triggers
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - heading "Get Started" [level=3] [ref=e45]
+        - paragraph [ref=e46]: Sign in or create an account to start managing your LinkedIn outreach
+      - generic [ref=e47]:
+        - generic [ref=e48]:
+          - tablist [ref=e49]:
+            - tab "Login" [ref=e50] [cursor=pointer]
+            - tab "Sign Up" [selected] [ref=e51] [cursor=pointer]
+          - tabpanel "Sign Up" [ref=e52]:
+            - generic [ref=e53]:
+              - generic [ref=e54]:
+                - generic [ref=e55]: Email
+                - textbox "Email" [ref=e56]: test1758274125141@testmail.com
+              - generic [ref=e57]:
+                - generic [ref=e58]: Password
+                - textbox "Password" [ref=e59]: TestPassword123!
+              - button "Sign Up" [ref=e60] [cursor=pointer]
+        - paragraph [ref=e62]:
+          - strong [ref=e63]: "⚠️ Important:"
+          - text: LinkedIn automation may violate their Terms of Service and could lead to account restrictions. Use this tool responsibly and at your own risk.
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e64]
+```

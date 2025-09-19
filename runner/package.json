@@ -1,0 +1,28 @@
+{
+  "name": "linkedin-runner",
+  "version": "1.0.0",
+  "description": "Production-grade LinkedIn automation runner with Playwright",
+  "main": "index-production.js",
+  "scripts": {
+    "start": "node index-production.js",
+    "start:legacy": "node index.js",
+    "dev": "nodemon index-production.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "playwright": "^1.47.0",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0",
+    "winston": "^3.11.0",
+    "p-queue": "^7.4.1",
+    "@supabase/supabase-js": "^2.39.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
