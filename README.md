@@ -2,6 +2,8 @@
 
 A production-grade, extensible web application for automated LinkedIn messaging with human-like behavior, built with Next.js, Supabase, and Playwright.
 
+🚀 **Live Demo**: https://linkedin-messenger.vercel.app
+
 ## ⚠️ Important Disclaimer
 
 **WARNING:** This tool automates LinkedIn interactions, which may violate LinkedIn's Terms of Service. Using this tool could result in:
