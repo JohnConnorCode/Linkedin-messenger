@@ -79,7 +79,7 @@ class LinkedInRunner {
       this.page = await this.context.newPage();
 
       // Anti-detection measures
-      await this.page.evaluateOnNewDocument(() => {
+      await this.context.addInitScript(() => {
         Object.defineProperty(navigator, 'webdriver', {
           get: () => undefined
         });
