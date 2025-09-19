@@ -54,7 +54,9 @@ export async function createServerActionClient() {
   );
 }
 
-export function createServiceRoleClient() {
+export async function createServiceRoleClient() {
+  const cookieStore = await cookies();
+
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
