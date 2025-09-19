@@ -10,12 +10,13 @@ export async function startCampaign(campaignId: string) {
   if (!user) throw new Error('Unauthorized');
 
   // Update campaign status to active
+  // @ts-ignore
   const { error: campaignError } = await supabase
     .from('campaigns')
     .update({
       status: 'active',
       updated_at: new Date().toISOString()
-    } as any)
+    })
     .eq('id', campaignId)
     .eq('user_id', user.id);
 
@@ -76,13 +77,14 @@ export async function pauseCampaign(campaignId: string) {
   if (!user) throw new Error('Unauthorized');
 
   // Update campaign status to paused
+  // @ts-ignore
   const { error } = await supabase
     .from('campaigns')
     .update({
       status: 'paused',
       paused_reason: 'User paused',
       updated_at: new Date().toISOString()
-    } as any)
+    })
     .eq('id', campaignId)
     .eq('user_id', user.id);
 
@@ -91,12 +93,13 @@ export async function pauseCampaign(campaignId: string) {
   }
 
   // Mark queued tasks as deferred
+  // @ts-ignore
   await supabase
     .from('task_queue')
     .update({
       status: 'deferred',
       updated_at: new Date().toISOString()
-    } as any)
+    })
     .eq('campaign_id', campaignId)
     .eq('status', 'queued');
 
@@ -122,12 +125,13 @@ export async function stopCampaign(campaignId: string) {
   if (!user) throw new Error('Unauthorized');
 
   // Update campaign status to completed
+  // @ts-ignore
   const { error } = await supabase
     .from('campaigns')
     .update({
       status: 'completed',
       updated_at: new Date().toISOString()
-    } as any)
+    })
     .eq('id', campaignId)
     .eq('user_id', user.id);
 
@@ -136,6 +140,7 @@ export async function stopCampaign(campaignId: string) {
   }
 
   // Cancel all pending tasks
+  // @ts-ignore
   await supabase
     .from('task_queue')
     .update({
@@ -143,7 +148,7 @@ export async function stopCampaign(campaignId: string) {
       last_error: 'Campaign stopped by user',
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
-    } as any)
+    })
     .eq('campaign_id', campaignId)
     .in('status', ['queued', 'deferred']);
 
@@ -180,6 +185,7 @@ export async function retryFailedTasks(campaignId: string) {
     // Reset failed tasks
     const taskIds = failedTasks.map(t => t.id);
 
+    // @ts-ignore
     await supabase
       .from('task_queue')
       .update({
@@ -188,7 +194,7 @@ export async function retryFailedTasks(campaignId: string) {
         last_error: null,
         run_after: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      } as any)
+      })
       .in('id', taskIds);
 
     // Log the event
