@@ -15,7 +15,7 @@ export async function startCampaign(campaignId: string) {
     .update({
       status: 'active',
       updated_at: new Date().toISOString()
-    })
+    } as any)
     .eq('id', campaignId)
     .eq('user_id', user.id);
 
@@ -82,7 +82,7 @@ export async function pauseCampaign(campaignId: string) {
       status: 'paused',
       paused_reason: 'User paused',
       updated_at: new Date().toISOString()
-    })
+    } as any)
     .eq('id', campaignId)
     .eq('user_id', user.id);
 
@@ -96,7 +96,7 @@ export async function pauseCampaign(campaignId: string) {
     .update({
       status: 'deferred',
       updated_at: new Date().toISOString()
-    })
+    } as any)
     .eq('campaign_id', campaignId)
     .eq('status', 'queued');
 
@@ -127,7 +127,7 @@ export async function stopCampaign(campaignId: string) {
     .update({
       status: 'completed',
       updated_at: new Date().toISOString()
-    })
+    } as any)
     .eq('id', campaignId)
     .eq('user_id', user.id);
 
@@ -143,7 +143,7 @@ export async function stopCampaign(campaignId: string) {
       last_error: 'Campaign stopped by user',
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
-    })
+    } as any)
     .eq('campaign_id', campaignId)
     .in('status', ['queued', 'deferred']);
 
@@ -188,7 +188,7 @@ export async function retryFailedTasks(campaignId: string) {
         last_error: null,
         run_after: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      })
+      } as any)
       .in('id', taskIds);
 
     // Log the event
