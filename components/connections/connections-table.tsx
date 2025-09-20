@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, MoreVertical } from 'lucide-react';
+import { ExternalLink, MoreVertical, User, Brain } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -164,6 +164,18 @@ export function ConnectionsTable({ searchQuery }: { searchQuery: string }) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => window.location.href = `/connections/${connection.id}/profile`}
+                        >
+                          <User className="h-4 w-4 mr-2" />
+                          View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => window.location.href = `/connections/${connection.id}/profile`}
+                        >
+                          <Brain className="h-4 w-4 mr-2" />
+                          AI Analysis
+                        </DropdownMenuItem>
                         <DropdownMenuItem>Edit</DropdownMenuItem>
                         <DropdownMenuItem>Add Tags</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">

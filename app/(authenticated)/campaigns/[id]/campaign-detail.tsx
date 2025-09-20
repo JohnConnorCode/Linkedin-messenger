@@ -31,7 +31,9 @@ import {
   TrendingUp,
   Calendar,
   Target,
-  Zap
+  Zap,
+  Brain,
+  Sparkles
 } from 'lucide-react';
 import { startCampaign, pauseCampaign, stopCampaign } from './actions';
 import Link from 'next/link';
@@ -42,6 +44,9 @@ interface CampaignStats {
   messages_pending: number;
   messages_failed: number;
   approval_pending: number;
+  ai_pending?: number;
+  ai_processed?: number;
+  ai_failed?: number;
 }
 
 interface CampaignDetailProps {
@@ -208,12 +213,22 @@ export function CampaignDetail({ campaign, stats, todayCount }: CampaignDetailPr
           )}
 
           {stats.approval_pending > 0 && (
-            <Link href={`/campaigns/${campaign.id}/approve`}>
-              <Button variant="outline">
-                <AlertCircle className="h-4 w-4 mr-2" />
-                {stats.approval_pending} Pending Approval
+            <Link href={`/ai-approval?campaign=${campaign.id}`}>
+              <Button variant="outline" className="relative">
+                <Brain className="h-4 w-4 mr-2" />
+                Review AI Messages
+                <Badge className="ml-2 bg-red-500" variant="destructive">
+                  {stats.approval_pending}
+                </Badge>
               </Button>
             </Link>
+          )}
+
+          {campaign.ai_enabled && stats.ai_pending > 0 && (
+            <Badge className="bg-blue-100 text-blue-700">
+              <Sparkles className="h-3 w-3 mr-1" />
+              {stats.ai_pending} Processing
+            </Badge>
           )}
         </div>
       </div>
@@ -273,6 +288,46 @@ export function CampaignDetail({ campaign, stats, todayCount }: CampaignDetailPr
         </CardContent>
       </Card>
 
+      {/* AI Processing Status */}
+      {campaign.ai_enabled && (stats.ai_pending > 0 || stats.ai_processed > 0) && (
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              AI Personalization Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span>Processed</span>
+                <span className="font-medium">{stats.ai_processed || 0}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>In Progress</span>
+                <span className="font-medium text-blue-600">{stats.ai_pending || 0}</span>
+              </div>
+              {stats.ai_failed > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Failed</span>
+                  <span className="font-medium text-red-600">{stats.ai_failed}</span>
+                </div>
+              )}
+              <Progress
+                value={(stats.ai_processed || 0) / ((stats.ai_processed || 0) + (stats.ai_pending || 0) + (stats.ai_failed || 0)) * 100}
+                className="h-2"
+              />
+              <Link href={`/ai-approval?campaign=${campaign.id}`}>
+                <Button variant="outline" size="sm" className="w-full">
+                  <CheckCircle2 className="h-3 w-3 mr-2" />
+                  Review AI Messages
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Today's Activity */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -331,6 +386,32 @@ export function CampaignDetail({ campaign, stats, todayCount }: CampaignDetailPr
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>AI Personalization</span>
+                <Badge variant={campaign.ai_enabled ? "default" : "secondary"}>
+                  {campaign.ai_enabled ? (
+                    <><Brain className="h-3 w-3 mr-1" />GPT-5 Nano</>
+                  ) : (
+                    'Disabled'
+                  )}
+                </Badge>
+              </div>
+              {campaign.ai_enabled && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span>AI Tone</span>
+                    <span className="font-medium capitalize">
+                      {campaign.ai_tone || 'professional'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Min Confidence</span>
+                    <span className="font-medium">
+                      {Math.round((campaign.ai_min_confidence || 0.7) * 100)}%
+                    </span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between text-sm">
                 <span>Manual Approval</span>
                 <Badge variant={campaign.require_manual_approval ? "default" : "secondary"}>

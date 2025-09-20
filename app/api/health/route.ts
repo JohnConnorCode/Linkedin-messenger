@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET() {
   const startTime = Date.now();
@@ -16,8 +16,19 @@ export async function GET() {
   };
 
   try {
+    // Create Supabase client for health check
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      }
+    );
+
     // Check database connectivity
-    const supabase = createServiceRoleClient();
     const { error: dbError } = await supabase
       .from('profiles')
       .select('count')

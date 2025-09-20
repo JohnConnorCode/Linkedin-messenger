@@ -16,7 +16,10 @@ import {
   AlertCircle,
   Zap,
   Target,
-  ArrowRight
+  ArrowRight,
+  Brain,
+  Sparkles,
+  DollarSign
 } from 'lucide-react';
 
 export default async function DashboardPage() {
@@ -102,6 +105,26 @@ export default async function DashboardPage() {
     .eq('requires_approval', true)
     .is('approved_at', null);
 
+  // Get AI metrics
+  const { data: aiQueue } = await supabase
+    .from('ai_personalization_queue')
+    .select('status, confidence_score')
+    .eq('user_id', user?.id);
+
+  const aiPending = aiQueue?.filter(q => q.status === 'pending').length || 0;
+  const aiProcessed = aiQueue?.filter(q => q.status === 'completed').length || 0;
+  const aiFailed = aiQueue?.filter(q => q.status === 'failed').length || 0;
+  const avgConfidence = aiProcessed > 0
+    ? Math.round(aiQueue
+        .filter(q => q.status === 'completed')
+        .reduce((acc, q) => acc + (q.confidence_score || 0), 0) / aiProcessed * 100)
+    : 0;
+
+  // Calculate AI cost (GPT-5 Nano pricing)
+  const messagesPerDay = sentToday + failedToday;
+  const aiCostToday = messagesPerDay * 0.00003; // Approximate cost per message
+  const monthlyCost = aiCostToday * 30;
+
   // Get recent activity
   const { data: recentActivity } = await supabase
     .from('analytics_events')
@@ -151,10 +174,16 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {aiPending > 0 && (
+            <Badge className="bg-blue-100 text-blue-700 px-3 py-1">
+              <Sparkles className="h-3 w-3 mr-1" />
+              {aiPending} AI Processing
+            </Badge>
+          )}
           {pendingApprovals && pendingApprovals > 0 && (
-            <Link href="/campaigns">
+            <Link href="/ai-approval">
               <Button variant="outline">
-                <AlertCircle className="h-4 w-4 mr-2" />
+                <Brain className="h-4 w-4 mr-2" />
                 {pendingApprovals} Pending Approvals
               </Button>
             </Link>
@@ -212,6 +241,59 @@ export default async function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* AI Performance Card */}
+      {(aiProcessed > 0 || aiPending > 0) && (
+        <Card className="border-purple-200 bg-purple-50 dark:bg-purple-900/20">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  AI Personalization
+                </CardTitle>
+                <CardDescription>
+                  GPT-5 Nano performance metrics
+                </CardDescription>
+              </div>
+              <Link href="/settings/ai">
+                <Button size="sm" variant="ghost">
+                  Settings
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div>
+                <p className="text-2xl font-bold text-green-600">{aiProcessed}</p>
+                <p className="text-xs text-muted-foreground">Processed</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-blue-600">{aiPending}</p>
+                <p className="text-xs text-muted-foreground">Processing</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-purple-600">{avgConfidence}%</p>
+                <p className="text-xs text-muted-foreground">Avg Confidence</p>
+              </div>
+            </div>
+            <div className="pt-3 border-t">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Today's Cost</span>
+                </div>
+                <span className="font-medium">${aiCostToday.toFixed(4)}</span>
+              </div>
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-xs text-muted-foreground">Monthly estimate</span>
+                <span className="text-xs font-medium">${monthlyCost.toFixed(2)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -347,7 +429,29 @@ export default async function DashboardPage() {
       )}
 
       {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              AI Approval Queue
+            </CardTitle>
+            <CardDescription>
+              Review AI-generated messages
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/ai-approval">
+              <Button className="w-full" variant="outline">
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Review Queue
+                {pendingApprovals > 0 && (
+                  <Badge className="ml-2" variant="destructive">{pendingApprovals}</Badge>
+                )}
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Import Connections</CardTitle>

@@ -13,6 +13,7 @@ import { CampaignWizard } from '@/components/campaigns/campaign-wizard';
 const STEPS = [
   { id: 'template', title: 'Choose Template', description: 'Select a message template' },
   { id: 'audience', title: 'Select Audience', description: 'Filter your connections' },
+  { id: 'ai', title: 'AI Personalization', description: 'Configure GPT-5 Nano settings' },
   { id: 'settings', title: 'Campaign Settings', description: 'Configure pacing and limits' },
   { id: 'review', title: 'Review & Launch', description: 'Preview and confirm' },
 ];
@@ -28,6 +29,12 @@ export default function NewCampaignPage() {
     hourly_cap: 5,
     jitter_ms: 5000,
     dwell_ms: 3000,
+    // AI Settings
+    ai_enabled: true,
+    ai_tone: 'professional',
+    ai_temperature: 0.3,
+    ai_auto_approve: false,
+    ai_min_confidence: 0.7,
   });
   const router = useRouter();
   const { toast } = useToast();

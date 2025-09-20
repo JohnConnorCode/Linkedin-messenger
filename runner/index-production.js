@@ -128,7 +128,7 @@ async function claimTask() {
 
     // Use Supabase RPC to claim task atomically
     const { data: tasks, error } = await supabase
-      .rpc('claim_task_atomic', {
+      .rpc('claim_next_task', {
         p_runner_id: config.runnerId,
         p_rate_limits_ok: true
       });
@@ -404,7 +404,7 @@ async function sendHeartbeat() {
     const memUsage = process.memoryUsage();
 
     const { error } = await supabase
-      .from('runner_health')
+      .from('runner_status')
       .insert({
         runner_id: config.runnerId,
         last_heartbeat: new Date().toISOString(),
@@ -440,7 +440,7 @@ async function handleAuthRequired() {
 
   // Update LinkedIn account status
   const { error } = await supabase
-    .from('linkedin_accounts')
+    .from('linkedin_sessions')
     .update({
       status: 'disconnected',
       last_check_at: new Date().toISOString()

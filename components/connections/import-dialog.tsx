@@ -14,18 +14,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText } from 'lucide-react';
+import { Upload, FileText, Brain, Sparkles } from 'lucide-react';
 import Papa from 'papaparse';
 
 interface ImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  campaignId?: string;
+  aiEnabled?: boolean;
 }
 
-export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
+export function ImportDialog({ open, onOpenChange, campaignId, aiEnabled }: ImportDialogProps) {
   const [importing, setImporting] = useState(false);
   const [csvText, setCsvText] = useState('');
+  const [aiProcessing, setAiProcessing] = useState(false);
+  const [aiProgress, setAiProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const supabase = createClient();
@@ -107,25 +113,86 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
       // Insert in batches
       const batchSize = 50;
       let imported = 0;
+      const connectionIds: string[] = [];
 
       for (let i = 0; i < validConnections.length; i += batchSize) {
         const batch = validConnections.slice(i, i + batchSize);
-        const { error } = await supabase.from('connections').insert(batch as any);
+        const { data: insertedData, error } = await supabase
+          .from('connections')
+          .insert(batch as any)
+          .select('id');
 
         if (error) {
           throw error;
         }
 
+        if (insertedData) {
+          connectionIds.push(...insertedData.map(c => c.id));
+        }
+
         imported += batch.length;
       }
 
-      toast({
-        title: 'Success',
-        description: `Imported ${imported} connections successfully`,
-      });
+      // If campaign context and AI enabled, trigger AI processing
+      if (campaignId && aiEnabled && connectionIds.length > 0) {
+        setAiProcessing(true);
+
+        // Create campaign targets with AI processing queue
+        const targets = connectionIds.map(connId => ({
+          campaign_id: campaignId,
+          connection_id: connId,
+          approval_status: 'pending',
+        }));
+
+        const { error: targetError } = await supabase
+          .from('campaign_targets')
+          .insert(targets as any);
+
+        if (targetError) throw targetError;
+
+        // Queue AI personalization for each connection
+        const aiQueue = connectionIds.map(connId => ({
+          connection_id: connId,
+          campaign_id: campaignId,
+          status: 'pending',
+          attempts: 0,
+        }));
+
+        const { error: aiError } = await supabase
+          .from('ai_personalization_queue')
+          .insert(aiQueue as any);
+
+        if (aiError) throw aiError;
+
+        // Simulate AI processing progress
+        for (let i = 0; i <= 100; i += 10) {
+          setAiProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        toast({
+          title: 'Success',
+          description: (
+            <div className="space-y-1">
+              <p>{imported} connections imported</p>
+              <p className="flex items-center gap-1">
+                <Brain className="h-3 w-3" />
+                AI personalization queued
+              </p>
+            </div>
+          ) as any,
+        });
+      } else {
+        toast({
+          title: 'Success',
+          description: `Imported ${imported} connections successfully`,
+        });
+      }
 
       // Reset form and close dialog
       setCsvText('');
+      setAiProcessing(false);
+      setAiProgress(0);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -151,6 +218,12 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
           <DialogTitle>Import Connections</DialogTitle>
           <DialogDescription>
             Upload a CSV file from LinkedIn or paste CSV data directly
+            {campaignId && aiEnabled && (
+              <span className="flex items-center gap-1 mt-2 text-blue-600">
+                <Brain className="h-3 w-3" />
+                AI personalization will be enabled for imported connections
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -198,19 +271,32 @@ Jane,Smith,Tech Corp,Product Manager,https://linkedin.com/in/janesmith"
               <li>• Tags (comma-separated)</li>
             </ul>
           </div>
+
+          {aiProcessing && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <Sparkles className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p className="font-medium">Processing with GPT-5 Nano...</p>
+                  <Progress value={aiProgress} className="h-2" />
+                  <p className="text-xs">Analyzing profiles and generating personalizations</p>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={importing}>
             Cancel
           </Button>
-          <Button onClick={handleImport} disabled={importing || !csvText.trim()}>
-            {importing ? (
-              <>Importing...</>
+          <Button onClick={handleImport} disabled={importing || !csvText.trim() || aiProcessing}>
+            {importing || aiProcessing ? (
+              <>{aiProcessing ? 'Processing with AI...' : 'Importing...'}</>
             ) : (
               <>
                 <Upload className="h-4 w-4 mr-2" />
-                Import Connections
+                Import {campaignId && aiEnabled ? 'and Process with AI' : 'Connections'}
               </>
             )}
           </Button>

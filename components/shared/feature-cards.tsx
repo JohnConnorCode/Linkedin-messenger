@@ -1,41 +1,41 @@
-import { MessageSquare, Users, Zap, Shield, ChartBar, Clock } from 'lucide-react';
+import { MessageSquare, Users, Zap, Shield, ChartBar, Brain } from 'lucide-react';
 
 export const features = [
   {
+    icon: Brain,
+    iconColor: 'text-purple-500',
+    title: 'AI-Powered Personalization',
+    description: 'GPT-5 Nano generates unique, context-aware messages for each recipient based on their profile and industry',
+  },
+  {
     icon: MessageSquare,
     iconColor: 'text-blue-500',
-    title: 'Personalized Messages',
-    description: 'Create message templates with variables that automatically personalize for each recipient using their LinkedIn data',
+    title: 'Smart Templates',
+    description: 'Dynamic templates with variables and AI-generated content that adapt to each connection automatically',
   },
   {
     icon: Users,
     iconColor: 'text-green-500',
-    title: 'Smart Targeting',
-    description: 'Import and manage your LinkedIn connections with tags, filters, and custom fields for targeted campaigns',
+    title: 'CSV Import & Targeting',
+    description: 'Import LinkedIn connections via CSV and segment them for targeted, personalized campaigns',
   },
   {
     icon: Zap,
-    iconColor: 'text-purple-500',
-    title: 'Semi-Automated Sending',
-    description: 'Queue messages for manual approval before sending to maintain control and LinkedIn compliance',
+    iconColor: 'text-yellow-500',
+    title: 'Automated Outreach',
+    description: 'Browser automation with Playwright sends messages automatically while you focus on other tasks',
   },
   {
     icon: Shield,
     iconColor: 'text-red-500',
-    title: 'Safety Features',
-    description: 'Built-in rate limiting and manual review steps to help protect your LinkedIn account',
+    title: 'Anti-Detection Safety',
+    description: 'Human-like behavior patterns, rate limiting, random delays, and session persistence protect your account',
   },
   {
     icon: ChartBar,
     iconColor: 'text-indigo-500',
-    title: 'Campaign Analytics',
-    description: 'Track sent messages, response rates, and campaign performance metrics',
-  },
-  {
-    icon: Clock,
-    iconColor: 'text-orange-500',
-    title: 'Scheduled Campaigns',
-    description: 'Set daily and hourly sending limits to control message flow and avoid spam triggers',
+    title: 'Real-time Analytics',
+    description: 'Monitor campaign performance, AI confidence scores, message success rates, and cost tracking',
   },
 ];
 

@@ -3,6 +3,11 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
+// Start AI processor in the background
+if (typeof window === 'undefined') {
+  import('@/lib/workers/start-processor');
+}
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {

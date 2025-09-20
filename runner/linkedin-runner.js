@@ -58,9 +58,13 @@ class LinkedInRunner {
       // Ensure user data directory exists
       await fs.mkdir(this.config.userDataDir, { recursive: true });
 
+      // Production-ready configuration with headless mode support
+      const isProduction = process.env.NODE_ENV === 'production';
+      const headlessMode = process.env.HEADLESS_MODE === 'true' || (isProduction && process.env.HEADLESS_MODE !== 'false');
+
       // Launch persistent context for session persistence
       this.context = await chromium.launchPersistentContext(this.config.userDataDir, {
-        headless: false, // Must be headful for anti-detection
+        headless: headlessMode,
         viewport: { width: 1366, height: 768 },
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         locale: 'en-US',
@@ -72,8 +76,19 @@ class LinkedInRunner {
           '--disable-dev-shm-usage',
           '--no-sandbox',
           '--disable-web-security',
-          '--disable-features=IsolateOrigins,site-per-process'
+          '--disable-features=IsolateOrigins,site-per-process',
+          // Additional production args for stability
+          '--disable-gpu',
+          '--disable-setuid-sandbox',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process', // Helps in containerized environments
+          '--disable-accelerated-2d-canvas',
+          '--disable-dev-tools'
         ],
+        // Production timeouts
+        timeout: 60000,
+        slowMo: isProduction ? 0 : 100 // Remove slowMo in production
       });
 
       this.page = await this.context.newPage();
@@ -487,10 +502,14 @@ class LinkedInRunner {
     }
   }
 
-  async close() {
+  async cleanup() {
     if (this.context) {
       await this.context.close();
     }
+  }
+
+  async close() {
+    await this.cleanup();
   }
 }
 

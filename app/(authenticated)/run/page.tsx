@@ -26,9 +26,9 @@ export default async function RunnerPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-3xl font-bold">Runner Configuration</h1>
+        <h1 className="text-3xl font-bold">LinkedIn Runner</h1>
         <p className="text-muted-foreground mt-2">
-          Manage your LinkedIn session and runner connection
+          Browser automation for sending LinkedIn messages with AI personalization
         </p>
       </div>
 
@@ -74,9 +74,9 @@ export default async function RunnerPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Manual Login Instructions</CardTitle>
+          <CardTitle>Quick Start Instructions</CardTitle>
           <CardDescription>
-            Follow these steps to connect your LinkedIn account
+            Follow these steps to start the LinkedIn automation runner
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

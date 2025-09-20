@@ -1,6 +1,6 @@
 import { createServerComponentClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
-import { ApprovalQueue } from './approval-queue';
+import { BulkApprovalQueue } from '@/components/campaigns/bulk-approval-queue';
 
 export default async function CampaignApprovalPage({
   params,
@@ -23,14 +23,21 @@ export default async function CampaignApprovalPage({
     notFound();
   }
 
-  // Get pending approval tasks
+  // Get pending approval tasks with AI personalization data
   const { data: pendingTasks } = await supabase
     .from('task_queue')
     .select(`
       *,
       campaign_targets!inner(
         *,
-        connections(*)
+        connections(*),
+        ai_summary_id
+      ),
+      ai_personalization_queue(
+        confidence_score,
+        first_line,
+        midline,
+        persona
       )
     `)
     .eq('campaign_id', params.id)
@@ -47,7 +54,7 @@ export default async function CampaignApprovalPage({
         </p>
       </div>
 
-      <ApprovalQueue
+      <BulkApprovalQueue
         campaign={campaign}
         template={campaign.message_templates}
         tasks={pendingTasks || []}

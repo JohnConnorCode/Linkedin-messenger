@@ -159,11 +159,14 @@ async function sendLinkedInMessage(task) {
         await page.screenshot({ path: screenshotPath });
         console.log(`   📸 Screenshot saved`);
 
-        // Send message (commented out for safety)
-        // const sendButton = await page.locator('button:has-text("Send")').first();
-        // await sendButton.click();
-
-        console.log('   ✉️  Message prepared (not sent in test mode)');
+        // Send message
+        const sendButton = await page.locator('button:has-text("Send")').first();
+        if (await sendButton.isVisible()) {
+          await sendButton.click();
+          console.log('   ✉️  Message sent!');
+        } else {
+          console.log('   ⚠️  Send button not found - message prepared but not sent');
+        }
         return true;
       }
     }

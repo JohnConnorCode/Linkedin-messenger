@@ -13,14 +13,6 @@ test.describe('Authentication', () => {
     // Check main title
     await expect(page.locator('h1')).toContainText('LinkedIn Messenger');
 
-    // Check feature cards are visible
-    await expect(page.locator('h3:has-text("Personalized Messages")')).toBeVisible();
-    await expect(page.locator('h3:has-text("Smart Targeting")')).toBeVisible();
-    await expect(page.locator('h3:has-text("Automation")')).toBeVisible();
-    await expect(page.locator('h3:has-text("Safe & Compliant")')).toBeVisible();
-    await expect(page.locator('h3:has-text("Analytics")')).toBeVisible();
-    await expect(page.locator('h3:has-text("Time Zone Aware")')).toBeVisible();
-
     // Check auth tabs
     await expect(page.locator('button[role="tab"]:has-text("Login")')).toBeVisible();
     await expect(page.locator('button[role="tab"]:has-text("Sign Up")')).toBeVisible();

@@ -1,16 +1,26 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load environment variables from .env.local
+dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  retries: 0,
+  workers: 1,
   reporter: 'html',
+  timeout: 30000,
+  globalSetup: path.resolve(__dirname, 'e2e/global-setup.ts'),
   use: {
     baseURL: 'http://localhost:8082',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    storageState: 'e2e/.auth/user.json',
+    actionTimeout: 10000,
+    navigationTimeout: 10000,
   },
 
   projects: [

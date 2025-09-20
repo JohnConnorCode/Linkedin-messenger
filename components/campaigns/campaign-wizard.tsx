@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Users, FileText, Settings, Eye } from 'lucide-react';
+import { Users, FileText, Settings, Eye, Brain } from 'lucide-react';
+import { AISettingsStep } from './ai-settings-step';
 
 interface CampaignWizardProps {
   step: string;
@@ -172,6 +173,20 @@ export function CampaignWizard({ step, data, onUpdate }: CampaignWizardProps) {
         </div>
       );
 
+    case 'ai':
+      return (
+        <AISettingsStep
+          data={{
+            ai_enabled: data.ai_enabled,
+            ai_tone: data.ai_tone,
+            ai_temperature: data.ai_temperature,
+            ai_auto_approve: data.ai_auto_approve,
+            ai_min_confidence: data.ai_min_confidence
+          }}
+          onChange={(updates) => onUpdate({ ...data, ...updates })}
+        />
+      );
+
     case 'settings':
       return (
         <div className="space-y-6">
@@ -274,6 +289,33 @@ export function CampaignWizard({ step, data, onUpdate }: CampaignWizardProps) {
                 </div>
               </dl>
             </Card>
+
+            {data.ai_enabled && (
+              <Card className="p-4">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  <Brain className="h-4 w-4" />
+                  AI Personalization
+                </h3>
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Model:</dt>
+                    <dd className="font-medium">GPT-5 Nano</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Tone:</dt>
+                    <dd className="font-medium capitalize">{data.ai_tone}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Min Confidence:</dt>
+                    <dd className="font-medium">{Math.round(data.ai_min_confidence * 100)}%</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Auto-Approve:</dt>
+                    <dd className="font-medium">{data.ai_auto_approve ? 'Yes (>90%)' : 'No'}</dd>
+                  </div>
+                </dl>
+              </Card>
+            )}
 
             <Card className="p-4">
               <h3 className="font-medium mb-2 flex items-center gap-2">

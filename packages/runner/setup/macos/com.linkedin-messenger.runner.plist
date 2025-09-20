@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.linkedin-messenger.runner</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/node</string>
+        <string>/Users/johnconnor/Documents/GitHub/Linkedin-messenger/packages/runner/dist/index.js</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/johnconnor/Documents/GitHub/Linkedin-messenger</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>/Users/johnconnor</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>Crashed</key>
+        <true/>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/johnconnor/Library/Logs/linkedin-runner.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/johnconnor/Library/Logs/linkedin-runner-error.log</string>
+
+    <key>ProcessType</key>
+    <string>Interactive</string>
+
+    <key>Nice</key>
+    <integer>10</integer>
+
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+</dict>
+</plist>

@@ -1,0 +1,58 @@
+{
+  "version": "v2025.09.1",
+  "updated": "2025-09-19",
+  "selectors": {
+    "login": {
+      "emailInput": "#username",
+      "passwordInput": "#password",
+      "submitButton": "button[type='submit']",
+      "rememberCheckbox": "#rememberMe"
+    },
+    "feed": {
+      "feedContainer": "main.scaffold-layout__main",
+      "postItem": "div.feed-shared-update-v2",
+      "newPostButton": "button.share-box-feed-entry__trigger"
+    },
+    "messaging": {
+      "messageButton": "button:has-text('Message')",
+      "messageButtonAlt": "button[aria-label*='Message']",
+      "composeButton": "button:has-text('Compose')",
+      "recipientInput": "input[placeholder*='Type a name']",
+      "messageTextarea": "div[contenteditable='true'][role='textbox']",
+      "sendButton": "button[type='submit']:has-text('Send')",
+      "sendButtonAlt": "button.msg-form__send-button",
+      "conversationList": "ul.msg-conversations-container__conversations-list",
+      "conversationItem": "li.msg-conversation-listitem"
+    },
+    "profile": {
+      "profileSection": "section.pv-top-card",
+      "connectButton": "button:has-text('Connect')",
+      "moreButton": "button[aria-label='More actions']",
+      "nameHeading": "h1.text-heading-xlarge"
+    },
+    "navigation": {
+      "homeLink": "a[href*='/feed/']",
+      "myNetworkLink": "a[href*='/mynetwork/']",
+      "jobsLink": "a[href*='/jobs/']",
+      "messagingLink": "a[href*='/messaging/']",
+      "notificationsLink": "a[href*='/notifications/']"
+    },
+    "modals": {
+      "modalContainer": "div[role='dialog']",
+      "closeButton": "button[aria-label='Dismiss']",
+      "primaryAction": "button.artdeco-button--primary"
+    }
+  },
+  "waits": {
+    "navigation": 3000,
+    "afterClick": 1500,
+    "typing": 50,
+    "betweenActions": 2000,
+    "pageLoad": 5000
+  },
+  "patterns": {
+    "profileUrl": "^https://www\\.linkedin\\.com/in/[^/]+/?$",
+    "feedUrl": "^https://www\\.linkedin\\.com/feed",
+    "messagingUrl": "^https://www\\.linkedin\\.com/messaging"
+  }
+}

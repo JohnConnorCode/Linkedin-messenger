@@ -14,7 +14,10 @@ import {
   BarChart,
   Shield,
   Clock,
-  Users
+  Users,
+  Brain,
+  Zap,
+  Terminal
 } from 'lucide-react';
 
 export default function HowItWorksPage() {
@@ -23,7 +26,7 @@ export default function HowItWorksPage() {
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4">How LinkedIn Messenger Works</h1>
         <p className="text-xl text-gray-600">
-          A transparent guide to using our LinkedIn outreach tool responsibly
+          AI-powered LinkedIn automation with GPT-5 Nano personalization
         </p>
       </div>
 
@@ -31,9 +34,9 @@ export default function HowItWorksPage() {
       <Alert className="mb-8 border-yellow-500 bg-yellow-50">
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <strong>Legal Disclaimer:</strong> This tool assists with LinkedIn messaging but does NOT fully automate it.
-          LinkedIn prohibits automated messaging in their Terms of Service. All messages require manual review and sending.
-          Use of this tool is at your own risk, and we recommend reviewing LinkedIn's User Agreement.
+          <strong>Important Notice:</strong> This tool automates LinkedIn messaging which may violate LinkedIn's Terms of Service.
+          Built-in safety features like rate limiting, manual approval, and human-like behavior patterns help protect your account,
+          but use at your own risk. Designed for internal team use with responsible practices.
         </AlertDescription>
       </Alert>
 
@@ -56,7 +59,7 @@ export default function HowItWorksPage() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">Step 1: Import Connections</CardTitle>
-                  <CardDescription>Manually export and upload your LinkedIn connections</CardDescription>
+                  <CardDescription>Export and upload your LinkedIn connections</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -64,15 +67,15 @@ export default function HowItWorksPage() {
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Export your connections from LinkedIn (Settings & Privacy → Data Privacy → Get a copy of your data)</span>
+                  <span>Export connections from LinkedIn (Data Privacy → Get a copy of your data)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Upload the CSV file to our system</span>
+                  <span>Upload CSV file to the app</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Add tags and custom fields to organize contacts</span>
+                  <span>Organize with tags and custom fields</span>
                 </li>
               </ul>
             </CardContent>
@@ -82,11 +85,11 @@ export default function HowItWorksPage() {
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="bg-purple-100 p-2 rounded-lg">
-                  <FileText className="h-5 w-5 text-purple-600" />
+                  <Brain className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Step 2: Create Message Templates</CardTitle>
-                  <CardDescription>Design personalized message templates with variables</CardDescription>
+                  <CardTitle className="text-lg">Step 2: Create AI-Powered Campaign</CardTitle>
+                  <CardDescription>Design templates with GPT-5 Nano personalization</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -94,15 +97,15 @@ export default function HowItWorksPage() {
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Write message templates using variables like {`{{firstName}}`}, {`{{company}}`}, {`{{headline}}`}</span>
+                  <span>Create templates with variables: {`{{firstName}}`}, {`{{company}}`}, {`{{position}}`}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Preview how messages will look for each recipient</span>
+                  <span>Enable AI personalization for unique opening lines</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <span>Templates are saved for reuse across campaigns</span>
+                  <span>GPT-5 Nano generates context-aware content at $0.05/1M tokens</span>
                 </li>
               </ul>
             </CardContent>
@@ -115,8 +118,8 @@ export default function HowItWorksPage() {
                   <Users className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Step 3: Select Recipients</CardTitle>
-                  <CardDescription>Choose who will receive your messages</CardDescription>
+                  <CardTitle className="text-lg">Step 3: Target Recipients</CardTitle>
+                  <CardDescription>Select connections for your campaign</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -124,15 +127,15 @@ export default function HowItWorksPage() {
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Filter connections by tags, location, company, or custom fields</span>
+                  <span>Filter by industry, location, company, or custom fields</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Review recipient list before creating campaign</span>
+                  <span>Add selected connections to campaign</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                  <span>System tracks previously messaged contacts to avoid duplicates</span>
+                  <Shield className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span>System prevents duplicate messaging automatically</span>
                 </li>
               </ul>
             </CardContent>
@@ -145,8 +148,8 @@ export default function HowItWorksPage() {
                   <Eye className="h-5 w-5 text-orange-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Step 4: Review & Approve Messages</CardTitle>
-                  <CardDescription>Manually review each personalized message before sending</CardDescription>
+                  <CardTitle className="text-lg">Step 4: Review & Approve</CardTitle>
+                  <CardDescription>Quality control before automation</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -154,7 +157,7 @@ export default function HowItWorksPage() {
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Each message is generated with recipient's actual data</span>
+                  <span>Preview AI-personalized messages for each recipient</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -162,7 +165,7 @@ export default function HowItWorksPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <Shield className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <span>This manual step ensures compliance and quality control</span>
+                  <span>Optional manual approval ensures quality control</span>
                 </li>
               </ul>
             </CardContent>
@@ -171,28 +174,62 @@ export default function HowItWorksPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-red-100 p-2 rounded-lg">
-                  <Send className="h-5 w-5 text-red-600" />
+                <div className="bg-yellow-100 p-2 rounded-lg">
+                  <Terminal className="h-5 w-5 text-yellow-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Step 5: Manual Sending</CardTitle>
-                  <CardDescription>You manually send approved messages on LinkedIn</CardDescription>
+                  <CardTitle className="text-lg">Step 5: Start Runner</CardTitle>
+                  <CardDescription>Launch the LinkedIn automation runner</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Important:</strong> This tool does NOT send messages automatically</span>
+                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Open terminal: <code className="bg-gray-100 px-2 py-1 rounded">cd runner && node run-local.js</code></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Chrome browser opens with LinkedIn</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <span>Copy approved messages and paste them into LinkedIn manually</span>
+                  <span>Log in once - session persists for future use</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="bg-green-100 p-2 rounded-lg">
+                  <Zap className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Step 6: Automated Sending</CardTitle>
+                  <CardDescription>Messages sent automatically with safety features</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start gap-2">
+                  <Zap className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>Playwright automation</strong> sends messages through real browser</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Clock className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <span>Mark messages as "sent" in the system for tracking</span>
+                  <Clock className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span>Human-like delays (90+ seconds) between messages</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Shield className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                  <span>Rate limiting: 5/hour, 25/day default limits</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Screenshots captured for every message sent</span>
                 </li>
               </ul>
             </CardContent>
@@ -205,8 +242,8 @@ export default function HowItWorksPage() {
                   <BarChart className="h-5 w-5 text-indigo-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Step 6: Track Performance</CardTitle>
-                  <CardDescription>Monitor your campaign results</CardDescription>
+                  <CardTitle className="text-lg">Step 7: Monitor & Analyze</CardTitle>
+                  <CardDescription>Track campaign performance in real-time</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -214,15 +251,15 @@ export default function HowItWorksPage() {
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Track which messages have been sent</span>
+                  <span>Real-time dashboard shows progress</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Log responses manually when received</span>
+                  <span>View message logs and screenshots</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <span>View campaign statistics and response rates</span>
+                  <span>Track AI performance and cost metrics</span>
                 </li>
               </ul>
             </CardContent>
@@ -230,39 +267,39 @@ export default function HowItWorksPage() {
         </div>
       </div>
 
-      {/* What This Tool Does NOT Do */}
-      <Card className="mb-8 border-red-200 bg-red-50">
+      {/* Safety Features */}
+      <Card className="mb-8 border-blue-200 bg-blue-50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-900">
-            <AlertTriangle className="h-5 w-5" />
-            What This Tool Does NOT Do
+          <CardTitle className="flex items-center gap-2 text-blue-900">
+            <Shield className="h-5 w-5" />
+            Built-in Safety Features
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2 text-sm text-red-900">
+          <ul className="space-y-2 text-sm text-blue-900">
             <li className="flex items-start gap-2">
-              <span className="font-semibold">•</span>
-              <span>Does NOT automatically send messages on LinkedIn</span>
+              <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+              <span><strong>Rate Limiting:</strong> Configurable hourly/daily limits (default: 5/hr, 25/day)</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-semibold">•</span>
-              <span>Does NOT access your LinkedIn account directly</span>
+              <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+              <span><strong>Human Behavior:</strong> Random delays, mouse movements, scrolling patterns</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-semibold">•</span>
-              <span>Does NOT scrape or crawl LinkedIn profiles</span>
+              <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+              <span><strong>Session Persistence:</strong> Login once, no repeated logins</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-semibold">•</span>
-              <span>Does NOT bypass LinkedIn's rate limits or security measures</span>
+              <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+              <span><strong>Circuit Breaker:</strong> Auto-pause on errors or detection</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-semibold">•</span>
-              <span>Does NOT guarantee delivery or response rates</span>
+              <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+              <span><strong>Quiet Hours:</strong> No messages during specified times</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-semibold">•</span>
-              <span>Does NOT track opens or clicks (LinkedIn doesn't provide this data)</span>
+              <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+              <span><strong>Manual Approval:</strong> Optional review before sending</span>
             </li>
           </ul>
         </CardContent>
@@ -276,23 +313,23 @@ export default function HowItWorksPage() {
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <h4 className="font-semibold mb-2 text-green-700">Do's</h4>
+              <h4 className="font-semibold mb-2 text-green-700">Recommended Do's</h4>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Keep messages personalized and relevant</span>
+                  <span>Start with 3-5 messages/hour</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Limit to 20-30 messages per day</span>
+                  <span>Use AI personalization for uniqueness</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Space out messages throughout the day</span>
+                  <span>Run during business hours only</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Review LinkedIn's Terms of Service regularly</span>
+                  <span>Monitor for LinkedIn warnings</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -301,27 +338,27 @@ export default function HowItWorksPage() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2 text-red-700">Don'ts</h4>
+              <h4 className="font-semibold mb-2 text-red-700">Critical Don'ts</h4>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span>Send more than 100 messages per week</span>
+                  <span>Exceed 100 messages per week</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span>Use generic, spammy templates</span>
+                  <span>Use generic spam templates</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span>Message people you don't know</span>
+                  <span>Ignore account warnings</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span>Ignore LinkedIn warnings or restrictions</span>
+                  <span>Run multiple accounts simultaneously</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span>Share login credentials with anyone</span>
+                  <span>Skip the manual approval step initially</span>
                 </li>
               </ul>
             </div>
@@ -332,30 +369,30 @@ export default function HowItWorksPage() {
       {/* Technical Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Technical Implementation</CardTitle>
-          <CardDescription>How we keep your data secure and maintain compliance</CardDescription>
+          <CardTitle>Technical Architecture</CardTitle>
+          <CardDescription>How the system works under the hood</CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="space-y-3 text-sm text-gray-600">
             <li className="flex items-start gap-2">
-              <Shield className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <span><strong>Data Storage:</strong> Your connections and messages are stored in encrypted Supabase databases</span>
+              <Brain className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+              <span><strong>AI Engine:</strong> GPT-5 Nano for personalization ($0.05/1M tokens)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Zap className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <span><strong>Automation:</strong> Playwright controls real Chrome browser</span>
             </li>
             <li className="flex items-start gap-2">
               <Shield className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <span><strong>No LinkedIn Access:</strong> We never ask for or store your LinkedIn credentials</span>
+              <span><strong>Database:</strong> Supabase for secure data storage</span>
             </li>
             <li className="flex items-start gap-2">
-              <Shield className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <span><strong>Manual Process:</strong> All LinkedIn interactions remain manual to comply with ToS</span>
+              <Clock className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+              <span><strong>Queue System:</strong> Database-backed task processing</span>
             </li>
             <li className="flex items-start gap-2">
-              <Shield className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <span><strong>Rate Limiting:</strong> Built-in limits prevent accidental spam behavior</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <Shield className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <span><strong>Open Source:</strong> Our codebase is transparent and auditable</span>
+              <Terminal className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+              <span><strong>Runner:</strong> Local Node.js process with session persistence</span>
             </li>
           </ul>
         </CardContent>

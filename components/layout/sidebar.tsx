@@ -12,16 +12,22 @@ import {
   BarChart3,
   Plug2,
   HelpCircle,
+  Brain,
+  CheckCircle,
+  Chrome,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'How It Works', href: '/how-it-works', icon: HelpCircle },
+  { name: 'LinkedIn Setup', href: '/linkedin-setup', icon: Chrome },
   { name: 'Connections', href: '/connections', icon: Users },
   { name: 'Templates', href: '/templates', icon: FileText },
   { name: 'Campaigns', href: '/campaigns', icon: Send },
+  { name: 'AI Approval Queue', href: '/ai-approval', icon: CheckCircle },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Runner', href: '/run', icon: Plug2 },
+  { name: 'AI Settings', href: '/settings/ai', icon: Brain },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
