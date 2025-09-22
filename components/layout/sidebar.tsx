@@ -15,10 +15,13 @@ import {
   Brain,
   CheckCircle,
   Chrome,
+  Rocket,
+  BookOpen,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Setup Guide', href: '/setup', icon: Rocket },
   { name: 'How It Works', href: '/how-it-works', icon: HelpCircle },
   { name: 'LinkedIn Setup', href: '/linkedin-setup', icon: Chrome },
   { name: 'Connections', href: '/connections', icon: Users },
@@ -28,6 +31,7 @@ const navigation = [
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Runner', href: '/run', icon: Plug2 },
   { name: 'AI Settings', href: '/settings/ai', icon: Brain },
+  { name: 'Help', href: '/help', icon: BookOpen },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
