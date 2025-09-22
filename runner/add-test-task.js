@@ -21,7 +21,7 @@ async function addTestTask() {
       connection_id: crypto.randomUUID(),
       user_id: 'test-user',
       status: 'pending',
-      priority: 1,
+      priority: 'high',
       scheduled_for: new Date().toISOString(),
       created_at: new Date().toISOString()
     })

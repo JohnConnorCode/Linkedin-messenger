@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { verifyRunnerToken } from '@/lib/auth/runner';
+import { safeClaimNextTask } from '@/lib/db/schema-fixes';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,9 +20,8 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceRoleClient();
 
-    // Call the claim_task function
-    const { data: tasks, error } = await supabase
-      .rpc('claim_task', { p_runner_id: runnerId } as any) as { data: any[] | null; error: any };
+    // Call the claim_next_task function using safe wrapper
+    const { data: tasks, error } = await safeClaimNextTask(supabase, runnerId, true);
 
     if (error) {
       console.error('Error claiming task:', error);

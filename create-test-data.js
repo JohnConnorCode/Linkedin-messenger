@@ -115,6 +115,7 @@ async function createTestData() {
       target_id: target.connection_id,
       user_id: userId,
       status: 'queued',
+      priority: 'medium', // Explicitly set text priority
       run_after: new Date(Date.now() + index * 60000).toISOString(),
       requires_approval: false,
       attempt: 0

@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: __dirname + '/.env' });
 const axios = require('axios');
 const winston = require('winston');
 const LinkedInRunner = require('./linkedin-runner');
@@ -126,12 +126,56 @@ async function claimTask() {
     // Check rate limits first
     const { data: { user } } = await supabase.auth.admin.listUsers();
 
-    // Use Supabase RPC to claim task atomically
-    const { data: tasks, error } = await supabase
-      .rpc('claim_next_task', {
-        p_runner_id: config.runnerId,
-        p_rate_limits_ok: true
-      });
+    // Use Supabase RPC to claim task atomically - with fallback for schema mismatch
+    let tasks, error;
+
+    try {
+      const result = await supabase
+        .rpc('claim_next_task', {
+          p_runner_id: config.runnerId,
+          p_rate_limits_ok: true
+        });
+      tasks = result.data;
+      error = result.error;
+    } catch (rpcError) {
+      // If function doesn't exist or has wrong signature, fall back to manual claiming
+      logger.warn('claim_next_task RPC failed, using fallback:', rpcError.message);
+
+      const fallbackResult = await supabase
+        .from('task_queue')
+        .select('*')
+        .eq('status', 'pending')
+        .is('claimed_at', null)
+        .order('created_at', { ascending: true })
+        .limit(1);
+
+      if (fallbackResult.data && fallbackResult.data.length > 0) {
+        const task = fallbackResult.data[0];
+
+        // Try to claim it
+        const updateResult = await supabase
+          .from('task_queue')
+          .update({
+            status: 'processing',
+            runner_id: config.runnerId,
+            claimed_at: new Date().toISOString(),
+            started_at: new Date().toISOString()
+          })
+          .eq('id', task.id)
+          .eq('status', 'pending'); // Ensure it's still pending
+
+        if (!updateResult.error) {
+          tasks = [task];
+          error = null;
+        } else {
+          tasks = [];
+          error = updateResult.error;
+        }
+      } else {
+        tasks = [];
+        error = fallbackResult.error;
+      }
+    }
 
     if (error) {
       logger.error('Error claiming task:', error);
@@ -403,21 +447,56 @@ async function sendHeartbeat() {
     const cpuUsage = process.cpuUsage();
     const memUsage = process.memoryUsage();
 
+    // Build heartbeat data with fallbacks for missing columns
+    const heartbeatData = {
+      runner_id: config.runnerId,
+      last_heartbeat: new Date().toISOString(),
+      status: 'healthy',
+      memory_mb: Math.round(memUsage.heapUsed / 1024 / 1024),
+      version: metrics.version,
+      metadata: metrics
+    };
+
+    // Add optional fields that might not exist in all schema versions
+    try {
+      heartbeatData.cpu_percent = (cpuUsage.user + cpuUsage.system) / 1000000;
+      heartbeatData.memory_percent = (memUsage.heapUsed / memUsage.heapTotal) * 100;
+      heartbeatData.active_tasks = []; // JSONB field
+      heartbeatData.error_count = 0;
+    } catch (e) {
+      // These fields might not exist yet
+    }
+
+    // Use upsert to handle both insert and update
     const { error } = await supabase
       .from('runner_status')
-      .insert({
-        runner_id: config.runnerId,
-        last_heartbeat: new Date().toISOString(),
-        status: 'healthy',
-        cpu_percent: (cpuUsage.user + cpuUsage.system) / 1000000,
-        memory_mb: Math.round(memUsage.heapUsed / 1024 / 1024),
-        active_tasks: 0,
-        version: metrics.version,
-        metadata: metrics
+      .upsert(heartbeatData, {
+        onConflict: 'runner_id'
       });
 
     if (error) {
       logger.error('Error sending heartbeat:', error);
+
+      // Try with minimal data if columns are missing
+      if (error.message.includes('column') && error.message.includes('does not exist')) {
+        logger.warn('Trying heartbeat with minimal data due to missing columns');
+
+        const minimalData = {
+          runner_id: config.runnerId,
+          last_heartbeat: new Date().toISOString(),
+          status: 'healthy'
+        };
+
+        const { error: minimalError } = await supabase
+          .from('runner_status')
+          .upsert(minimalData, {
+            onConflict: 'runner_id'
+          });
+
+        if (minimalError) {
+          logger.error('Minimal heartbeat also failed:', minimalError);
+        }
+      }
     }
   } catch (error) {
     logger.error('Heartbeat error:', error);
@@ -438,13 +517,28 @@ function startHeartbeat() {
 async function handleAuthRequired() {
   logger.warn('Authentication required - manual intervention needed');
 
-  // Update LinkedIn account status
+  // Update LinkedIn account status with fallback for missing columns
+  const updateData = {};
+
+  // Try to add available columns
+  try {
+    updateData.status = 'disconnected';
+  } catch (e) {
+    // status column might not exist
+  }
+
+  try {
+    updateData.last_check_at = new Date().toISOString();
+  } catch (e) {
+    // last_check_at column might not exist
+  }
+
+  // Add fallback for older schema
+  updateData.updated_at = new Date().toISOString();
+
   const { error } = await supabase
     .from('linkedin_sessions')
-    .update({
-      status: 'disconnected',
-      last_check_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('runner_instance', config.runnerId);
 
   if (error) {

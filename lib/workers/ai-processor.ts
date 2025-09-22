@@ -92,7 +92,12 @@ export class AIProcessor {
         .limit(5);
 
       if (error) {
-        console.error('Error fetching AI queue:', error);
+        console.error('Error fetching AI queue:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         return;
       }
 

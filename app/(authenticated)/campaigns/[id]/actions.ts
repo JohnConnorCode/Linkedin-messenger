@@ -39,6 +39,7 @@ export async function startCampaign(campaignId: string) {
       target_id: target.id,
       user_id: user.id,
       status: 'queued',
+      priority: 'medium', // Explicitly set text priority instead of relying on default
       run_after: new Date(Date.now() + index * 60000).toISOString(), // Space out by 1 minute
       requires_approval: target.approval_status === null,
       created_at: new Date().toISOString(),

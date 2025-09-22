@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { verifyRunnerToken } from '@/lib/auth/runner';
+import { safeRunnerStatusUpsert } from '@/lib/db/schema-fixes';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,15 +23,16 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceRoleClient();
 
-    // Update runner status
-    const { error: updateError } = await (supabase
-      .from('runner_status') as any)
-      .upsert({
-        runner_id: runnerId,
-        status: status || 'active',
-        last_heartbeat: new Date().toISOString(),
-        metrics: metrics || {},
-      });
+    // Update runner status using safe wrapper
+    const { error: updateError } = await safeRunnerStatusUpsert(supabase, {
+      runner_id: runnerId,
+      status: status || 'active',
+      last_heartbeat: new Date().toISOString(),
+      metrics: metrics || {},
+      cpu_percent: metrics?.cpu_percent,
+      memory_percent: metrics?.memory_percent,
+      error_count: metrics?.error_count || 0
+    });
 
     if (updateError) {
       console.error('Error updating runner status:', updateError);
