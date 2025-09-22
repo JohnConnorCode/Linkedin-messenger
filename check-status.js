@@ -1,7 +1,15 @@
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config({ path: '.env.local' });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gpuvqonjpdjxehihpuke.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwdXZxb25qcGRqeGVoaWhwdWtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTc2NTksImV4cCI6MjA3MzgzMzY1OX0._Ryjf18NOYaozCeSxkhREMbtwHw8bvGgmra9Ym_6ADY';
+// SECURITY: Never hardcode credentials - use environment variables only
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing environment variables!');
+  console.error('   Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in .env.local');
+  process.exit(1);
+}
 
 async function checkStatus() {
   console.log('🔍 LinkedIn Messenger - System Status Check\n');
