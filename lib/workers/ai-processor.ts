@@ -10,10 +10,17 @@ export class AIProcessor {
   private processingInterval: NodeJS.Timeout | null = null;
 
   constructor() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase environment variables are not configured');
+    }
+
     // Initialize Supabase with service role for background processing
     this.supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      supabaseUrl,
+      supabaseKey,
       {
         auth: {
           persistSession: false,
@@ -21,7 +28,10 @@ export class AIProcessor {
         }
       }
     );
-    this.personalizationService = new PersonalizationService();
+    this.personalizationService = new PersonalizationService(
+      supabaseUrl,
+      supabaseKey
+    );
     this.scraper = new LinkedInScraper();
   }
 
@@ -148,10 +158,10 @@ export class AIProcessor {
           headline: request.connections.headline,
           company: request.connections.company
         },
-        template: template.body,
-        variables: template.variables || [],
+        templateBody: template.body,
+        variables: template.variables || {},
         tone: request.campaigns.ai_tone || 'professional',
-        temperature: request.campaigns.ai_temperature || 0.3
+        campaignContext: request.campaigns.context || ''
       };
 
       const personalization = await this.personalizationService.generatePersonalization(
@@ -165,9 +175,9 @@ export class AIProcessor {
         '{{fullName}}': request.connections.full_name,
         '{{company}}': request.connections.company || 'your company',
         '{{headline}}': request.connections.headline || 'professional',
-        '{{personalizedOpening}}': personalization.first_line,
+        '{{personalizedOpening}}': personalization.firstLine,
         '{{personalizedContext}}': personalization.midline || '',
-        '{{commonGround}}': personalization.persona?.common_interests || ''
+        '{{commonGround}}': personalization.persona?.signals?.join(', ') || ''
       };
 
       for (const [variable, value] of Object.entries(variableMapping)) {
@@ -180,11 +190,11 @@ export class AIProcessor {
         .insert({
           connection_id: request.connection_id,
           persona: personalization.persona,
-          interests: personalization.interests,
-          expertise: personalization.expertise,
-          first_line: personalization.first_line,
+          interests: personalization.variables?.interests || '',
+          expertise: personalization.variables?.expertise || '',
+          first_line: personalization.firstLine,
           midline: personalization.midline,
-          confidence_score: personalization.confidence_score,
+          confidence_score: personalization.confidence,
           model_used: 'gpt-5-nano',
           generated_at: new Date().toISOString()
         })
@@ -196,10 +206,10 @@ export class AIProcessor {
         .from('ai_personalization_queue')
         .update({
           status: 'completed',
-          first_line: personalization.first_line,
+          first_line: personalization.firstLine,
           midline: personalization.midline,
           persona: personalization.persona,
-          confidence_score: personalization.confidence_score,
+          confidence_score: personalization.confidence,
           processing_time_ms: Date.now() - startTime,
           completed_at: new Date().toISOString()
         })
@@ -220,7 +230,7 @@ export class AIProcessor {
             final_message: finalMessage,
             personalization_applied: true,
             ai_summary_id: summary?.id,
-            approval_status: personalization.confidence_score >= 0.9 &&
+            approval_status: personalization.confidence >= 0.9 &&
                            request.campaigns.ai_auto_approve
                            ? 'approved'
                            : 'pending'
@@ -228,7 +238,7 @@ export class AIProcessor {
           .eq('id', target.id);
       }
 
-      console.log(`✓ Processed AI personalization for ${request.connections.full_name} (${personalization.confidence_score * 100}% confidence)`);
+      console.log(`✓ Processed AI personalization for ${request.connections.full_name} (${personalization.confidence * 100}% confidence)`);
 
     } catch (error) {
       console.error(`Failed to process personalization for connection ${request.connection_id}:`, error);
@@ -238,7 +248,7 @@ export class AIProcessor {
         .from('ai_personalization_queue')
         .update({
           status: request.attempts >= 2 ? 'failed' : 'pending',
-          last_error: error.message,
+          last_error: error instanceof Error ? error.message : String(error),
           processing_time_ms: Date.now() - startTime
         })
         .eq('id', request.id);

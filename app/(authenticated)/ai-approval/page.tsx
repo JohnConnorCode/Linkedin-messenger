@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
   Brain,
@@ -98,11 +99,11 @@ export default function AIApprovalQueuePage() {
 
       if (error) throw error;
 
-      const formattedItems = data?.map(item => ({
+      const formattedItems = data?.map((item: any) => ({
         id: item.id,
         campaign_id: item.campaign_id,
         connection_id: item.connection_id,
-        campaign_name: item.campaigns.name,
+        campaign_name: item.campaigns?.name,
         connection: item.connections,
         personalization: item.ai_personalization_queue,
         final_message: item.final_message,
@@ -131,7 +132,7 @@ export default function AIApprovalQueuePage() {
         updates.final_message = message;
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('campaign_targets')
         .update(updates)
         .eq('id', id);
@@ -177,7 +178,7 @@ export default function AIApprovalQueuePage() {
   const handleRegenerateAI = async (item: ApprovalItem) => {
     setProcessingId(item.id);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('ai_personalization_queue')
         .update({
           status: 'pending',

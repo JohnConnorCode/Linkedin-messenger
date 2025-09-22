@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, Users, Building, MapPin, Briefcase, Tag, X, CheckCircle, XCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import debounce from 'lodash/debounce';
 
 interface ConnectionFilters {

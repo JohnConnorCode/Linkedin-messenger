@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Play, Pause, AlertCircle, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 interface ScheduleSettings {
   enabled: boolean;
@@ -38,6 +38,7 @@ interface CampaignSchedulerProps {
 }
 
 export default function CampaignScheduler({ campaignId, onScheduleUpdate }: CampaignSchedulerProps) {
+  const { toast } = useToast();
   const [settings, setSettings] = useState<ScheduleSettings>({
     enabled: false,
     startDate: new Date().toISOString().split('T')[0],
@@ -97,10 +98,17 @@ export default function CampaignScheduler({ campaignId, onScheduleUpdate }: Camp
 
       if (error) throw error;
 
-      toast.success('Schedule settings saved');
+      toast({
+        title: "Success",
+        description: "Schedule settings saved",
+      });
       onScheduleUpdate?.(settings);
     } catch (error) {
-      toast.error('Failed to save schedule settings');
+      toast({
+        title: "Error",
+        description: "Failed to save schedule settings",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }

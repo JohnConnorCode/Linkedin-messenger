@@ -1,5 +1,24 @@
 'use client';
 
+// Add Chrome extension API type declarations
+declare global {
+  interface Window {
+    chrome?: {
+      cookies: {
+        getAll: (details: { domain: string }) => Promise<Array<{
+          name: string;
+          value: string;
+          domain?: string;
+          path?: string;
+          expirationDate?: number;
+          httpOnly?: boolean;
+          secure?: boolean;
+        }>>;
+      };
+    };
+  }
+}
+
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -105,8 +124,8 @@ export function CookieExtractor({ onSessionSaved }: { onSessionSaved?: () => voi
 
     try {
       // Attempt to extract cookies using browser extension API (if available)
-      if (typeof chrome !== 'undefined' && chrome.cookies) {
-        const cookies = await chrome.cookies.getAll({ domain: '.linkedin.com' });
+      if (typeof window !== 'undefined' && window.chrome?.cookies) {
+        const cookies = await window.chrome.cookies.getAll({ domain: '.linkedin.com' });
 
         const session: ExtractedSession = {
           cookies: cookies.map(c => ({

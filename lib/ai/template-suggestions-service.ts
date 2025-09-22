@@ -212,7 +212,7 @@ Best regards,
     return [
       'Personalize the opening line with specific details from their profile',
       'Keep the message concise and focused on one clear value proposition',
-      'End with a soft call-to-action that's easy to respond to'
+      'End with a soft call-to-action that\'s easy to respond to'
     ];
   }
 

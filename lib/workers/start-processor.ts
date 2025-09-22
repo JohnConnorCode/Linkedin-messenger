@@ -1,5 +1,7 @@
 import { getAIProcessor } from './ai-processor';
 
+let processor: any = null;
+
 // Start AI processor when the module is loaded
 if (typeof window === 'undefined') {
   // Only run on server and if environment is configured
@@ -7,7 +9,7 @@ if (typeof window === 'undefined') {
     console.log('⚠️ AI Processor skipped - missing Supabase configuration');
   } else {
     try {
-      const processor = getAIProcessor();
+      processor = getAIProcessor();
 
       // Start processing in the background
       processor.start()
@@ -25,13 +27,17 @@ if (typeof window === 'undefined') {
   // Graceful shutdown
   process.on('SIGINT', () => {
     console.log('Shutting down AI Processor...');
-    processor.stop();
+    if (processor) {
+      processor.stop();
+    }
     process.exit(0);
   });
 
   process.on('SIGTERM', () => {
     console.log('Shutting down AI Processor...');
-    processor.stop();
+    if (processor) {
+      processor.stop();
+    }
     process.exit(0);
   });
 }

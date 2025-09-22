@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Eye, Send, TestTube, User, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 interface MessagePreviewTesterProps {
   campaignId: string;
@@ -38,6 +38,7 @@ export default function MessagePreviewTester({ campaignId, template, targets = [
   const [sending, setSending] = useState(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'test'>('preview');
   const supabase = createClient();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (targets.length > 0) {
@@ -175,9 +176,16 @@ export default function MessagePreviewTester({ campaignId, template, targets = [
 
       if (!response.ok) throw new Error('Failed to send test');
 
-      toast.success('Test message sent to your email');
+      toast({
+        title: "Success",
+        description: "Test message sent to your email",
+      });
     } catch (error) {
-      toast.error('Failed to send test message');
+      toast({
+        title: "Error",
+        description: "Failed to send test message",
+        variant: "destructive",
+      });
     } finally {
       setSending(false);
     }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Download, Upload, Archive, FileJson, FileText, Shield, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 interface ExportBackupManagerProps {
   campaignId: string;

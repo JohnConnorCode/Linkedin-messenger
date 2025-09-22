@@ -11,7 +11,7 @@ import PerformanceAnalytics from '@/components/analytics/performance-analytics';
 import ABTestingUI from '@/components/campaigns/ab-testing-ui';
 import TemplateSuggestions from '@/components/campaigns/template-suggestions';
 import { createClient } from '@/lib/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Activity, 
   Calendar, 
@@ -36,6 +36,7 @@ export default function EnhancedCampaignView({ campaignId, campaign }: EnhancedC
   const [template, setTemplate] = useState(campaign?.message_template || '');
   const [selectedConnections, setSelectedConnections] = useState<string[]>([]);
   const [filteredCount, setFilteredCount] = useState(0);
+  const { toast } = useToast();
   const supabase = createClient();
 
   useEffect(() => {
@@ -53,7 +54,10 @@ export default function EnhancedCampaignView({ campaignId, campaign }: EnhancedC
   };
 
   const handleScheduleUpdate = (settings: any) => {
-    toast.success('Schedule settings updated');
+    toast({
+      title: "Success",
+      description: "Schedule settings updated",
+    });
     // Could trigger campaign status update here
   };
 
@@ -197,7 +201,10 @@ export default function EnhancedCampaignView({ campaignId, campaign }: EnhancedC
           <BulkApprovalQueue
             campaignId={campaignId}
             onApprovalComplete={() => {
-              toast.success('Messages approved and queued for sending');
+              toast({
+                title: "Success",
+                description: "Messages approved and queued for sending",
+              });
               loadTargets();
             }}
           />
@@ -208,7 +215,10 @@ export default function EnhancedCampaignView({ campaignId, campaign }: EnhancedC
           <ABTestingUI
             campaignId={campaignId}
             onTestCreated={(testId) => {
-              toast.success('A/B test created successfully');
+              toast({
+                title: "Success",
+                description: "A/B test created successfully",
+              });
             }}
           />
         </TabsContent>
