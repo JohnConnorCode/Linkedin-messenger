@@ -447,17 +447,22 @@ async function sendHeartbeat() {
     const cpuUsage = process.cpuUsage();
     const memUsage = process.memoryUsage();
 
-    // Build heartbeat data - only use columns that exist in the schema
+    // Build heartbeat data with all required columns
     const heartbeatData = {
       runner_id: config.runnerId,
       last_heartbeat: new Date().toISOString(),
       status: 'healthy',
+      cpu_percent: (cpuUsage.user + cpuUsage.system) / 1000000,
+      memory_percent: (memUsage.heapUsed / memUsage.heapTotal) * 100,
+      memory_mb: Math.round(memUsage.heapUsed / 1024 / 1024),
+      active_tasks: [],
+      error_count: 0,
+      version: metrics.version,
+      metadata: metrics,
       metrics: {
+        ...metrics,
         memory_mb: Math.round(memUsage.heapUsed / 1024 / 1024),
-        cpu_usage: (cpuUsage.user + cpuUsage.system) / 1000000,
-        memory_percent: (memUsage.heapUsed / memUsage.heapTotal) * 100,
-        version: metrics.version,
-        ...metrics
+        cpu_usage: (cpuUsage.user + cpuUsage.system) / 1000000
       }
     }
 
@@ -471,15 +476,14 @@ async function sendHeartbeat() {
     if (error) {
       logger.error('Error sending heartbeat:', error);
 
-      // Try with minimal data if columns are missing
-      if (error.message && error.message.includes('column')) {
-        logger.warn('Trying heartbeat with minimal data due to missing columns');
+      // Try with minimal data if error occurs
+      if (error) {
+        logger.warn('Trying heartbeat with minimal data due to error');
 
         const minimalData = {
           runner_id: config.runnerId,
           last_heartbeat: new Date().toISOString(),
-          status: 'healthy',
-          metrics: {}
+          status: 'healthy'
         };
 
         const { error: minimalError } = await supabase
@@ -512,17 +516,23 @@ function startHeartbeat() {
 async function handleAuthRequired() {
   logger.warn('Authentication required - manual intervention needed');
 
-  // Update LinkedIn account status - only use columns that exist
+  // Update LinkedIn account status with all columns
   const updateData = {
+    status: 'disconnected',
     is_active: false,
+    is_authenticated: false,
+    last_check_at: new Date().toISOString(),
+    last_activity: new Date().toISOString(),
     last_used: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    runner_instance: config.runnerId
   };
 
   const { error } = await supabase
     .from('linkedin_sessions')
     .update(updateData)
-    .eq('runner_id', config.runnerId);
+    .eq('runner_id', config.runnerId)
+    .or(`runner_instance.eq.${config.runnerId}`);
 
   if (error) {
     logger.error('Error updating account status:', error);
