@@ -447,24 +447,18 @@ async function sendHeartbeat() {
     const cpuUsage = process.cpuUsage();
     const memUsage = process.memoryUsage();
 
-    // Build heartbeat data with fallbacks for missing columns
+    // Build heartbeat data - only use columns that exist in the schema
     const heartbeatData = {
       runner_id: config.runnerId,
       last_heartbeat: new Date().toISOString(),
       status: 'healthy',
-      memory_mb: Math.round(memUsage.heapUsed / 1024 / 1024),
-      version: metrics.version,
-      metadata: metrics
-    };
-
-    // Add optional fields that might not exist in all schema versions
-    try {
-      heartbeatData.cpu_percent = (cpuUsage.user + cpuUsage.system) / 1000000;
-      heartbeatData.memory_percent = (memUsage.heapUsed / memUsage.heapTotal) * 100;
-      heartbeatData.active_tasks = []; // JSONB field
-      heartbeatData.error_count = 0;
-    } catch (e) {
-      // These fields might not exist yet
+      metrics: {
+        memory_mb: Math.round(memUsage.heapUsed / 1024 / 1024),
+        cpu_usage: (cpuUsage.user + cpuUsage.system) / 1000000,
+        memory_percent: (memUsage.heapUsed / memUsage.heapTotal) * 100,
+        version: metrics.version,
+        ...metrics
+      }
     }
 
     // Use upsert to handle both insert and update
@@ -478,13 +472,14 @@ async function sendHeartbeat() {
       logger.error('Error sending heartbeat:', error);
 
       // Try with minimal data if columns are missing
-      if (error.message.includes('column') && error.message.includes('does not exist')) {
+      if (error.message && error.message.includes('column')) {
         logger.warn('Trying heartbeat with minimal data due to missing columns');
 
         const minimalData = {
           runner_id: config.runnerId,
           last_heartbeat: new Date().toISOString(),
-          status: 'healthy'
+          status: 'healthy',
+          metrics: {}
         };
 
         const { error: minimalError } = await supabase
@@ -517,29 +512,17 @@ function startHeartbeat() {
 async function handleAuthRequired() {
   logger.warn('Authentication required - manual intervention needed');
 
-  // Update LinkedIn account status with fallback for missing columns
-  const updateData = {};
-
-  // Try to add available columns
-  try {
-    updateData.status = 'disconnected';
-  } catch (e) {
-    // status column might not exist
-  }
-
-  try {
-    updateData.last_check_at = new Date().toISOString();
-  } catch (e) {
-    // last_check_at column might not exist
-  }
-
-  // Add fallback for older schema
-  updateData.updated_at = new Date().toISOString();
+  // Update LinkedIn account status - only use columns that exist
+  const updateData = {
+    is_active: false,
+    last_used: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
 
   const { error } = await supabase
     .from('linkedin_sessions')
     .update(updateData)
-    .eq('runner_instance', config.runnerId);
+    .eq('runner_id', config.runnerId);
 
   if (error) {
     logger.error('Error updating account status:', error);
