@@ -1,6 +1,6 @@
 import { createServerComponentClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
-import { BulkApprovalQueue } from '@/components/campaigns/bulk-approval-queue';
+import BulkApprovalQueue from '@/components/campaigns/bulk-approval-queue';
 
 export default async function CampaignApprovalPage({
   params,

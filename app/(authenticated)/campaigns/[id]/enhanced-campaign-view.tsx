@@ -10,19 +10,21 @@ import BulkApprovalQueue from '@/components/campaigns/bulk-approval-queue';
 import PerformanceAnalytics from '@/components/analytics/performance-analytics';
 import ABTestingUI from '@/components/campaigns/ab-testing-ui';
 import TemplateSuggestions from '@/components/campaigns/template-suggestions';
+import { SuperDebateSettings, SuperDebateTargets, FollowUpQueue, ResponseInbox } from '@/components/superdebate';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Activity, 
-  Calendar, 
-  Filter, 
-  MessageSquare, 
-  Settings, 
-  TrendingUp, 
+import {
+  Activity,
+  Calendar,
+  Filter,
+  MessageSquare,
+  Settings,
+  TrendingUp,
   Users,
   Zap,
   TestTube,
-  Eye
+  Eye,
+  Sparkles
 } from 'lucide-react';
 
 interface EnhancedCampaignViewProps {
@@ -94,6 +96,12 @@ export default function EnhancedCampaignView({ campaignId, campaign }: EnhancedC
                   Scheduled
                 </span>
               )}
+              {campaign.superdebate_enabled && (
+                <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  SuperDebate AI
+                </span>
+              )}
             </div>
           </div>
           <div className="flex gap-2">
@@ -111,10 +119,14 @@ export default function EnhancedCampaignView({ campaignId, campaign }: EnhancedC
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-8 w-full">
+        <TabsList className="grid grid-cols-9 w-full">
           <TabsTrigger value="control" className="flex items-center gap-1">
             <Activity className="h-4 w-4" />
             Control
+          </TabsTrigger>
+          <TabsTrigger value="superdebate" className="flex items-center gap-1">
+            <Sparkles className="h-4 w-4" />
+            SuperDebate
           </TabsTrigger>
           <TabsTrigger value="schedule" className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
@@ -148,10 +160,42 @@ export default function EnhancedCampaignView({ campaignId, campaign }: EnhancedC
 
         {/* Control Center Tab */}
         <TabsContent value="control">
-          <CampaignControlCenter 
+          <CampaignControlCenter
             campaignId={campaignId}
             onStatusChange={(status) => console.log('Status:', status)}
           />
+        </TabsContent>
+
+        {/* SuperDebate Tab */}
+        <TabsContent value="superdebate">
+          <Tabs defaultValue="settings" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="targets">Targets & Classification</TabsTrigger>
+              <TabsTrigger value="responses">Response Inbox</TabsTrigger>
+              <TabsTrigger value="followups">Follow-up Queue</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="settings">
+              <SuperDebateSettings
+                campaignId={campaignId}
+                campaign={campaign}
+                onUpdate={loadTargets}
+              />
+            </TabsContent>
+
+            <TabsContent value="targets">
+              <SuperDebateTargets campaignId={campaignId} />
+            </TabsContent>
+
+            <TabsContent value="responses">
+              <ResponseInbox campaignId={campaignId} />
+            </TabsContent>
+
+            <TabsContent value="followups">
+              <FollowUpQueue campaignId={campaignId} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         {/* Schedule Tab */}

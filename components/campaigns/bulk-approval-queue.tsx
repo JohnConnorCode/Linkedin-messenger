@@ -67,13 +67,15 @@ interface Task {
 }
 
 interface BulkApprovalQueueProps {
-  campaign: any;
-  template: any;
-  tasks: Task[];
+  campaign?: any;
+  template?: any;
+  tasks?: Task[];
+  campaignId?: string;
+  onApprovalComplete?: () => void;
 }
 
-export function BulkApprovalQueue({ campaign, template, tasks: initialTasks }: BulkApprovalQueueProps) {
-  const [tasks, setTasks] = useState(initialTasks);
+export default function BulkApprovalQueue({ campaign, template, tasks: initialTasks, campaignId, onApprovalComplete }: BulkApprovalQueueProps) {
+  const [tasks, setTasks] = useState(initialTasks || []);
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [editedMessages, setEditedMessages] = useState<Record<string, string>>({});

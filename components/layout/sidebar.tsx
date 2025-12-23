@@ -17,12 +17,14 @@ import {
   Chrome,
   Rocket,
   BookOpen,
+  Sparkles,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Setup Guide', href: '/setup', icon: Rocket },
   { name: 'How It Works', href: '/how-it-works', icon: HelpCircle },
+  { name: 'All Features', href: '/features', icon: Sparkles },
   { name: 'LinkedIn Setup', href: '/linkedin-setup', icon: Chrome },
   { name: 'Connections', href: '/connections', icon: Users },
   { name: 'Templates', href: '/templates', icon: FileText },

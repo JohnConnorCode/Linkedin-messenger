@@ -224,7 +224,7 @@ export function CampaignDetail({ campaign, stats, todayCount }: CampaignDetailPr
             </Link>
           )}
 
-          {campaign.ai_enabled && stats.ai_pending > 0 && (
+          {campaign.ai_enabled && (stats.ai_pending ?? 0) > 0 && (
             <Badge className="bg-blue-100 text-blue-700">
               <Sparkles className="h-3 w-3 mr-1" />
               {stats.ai_pending} Processing
@@ -289,7 +289,7 @@ export function CampaignDetail({ campaign, stats, todayCount }: CampaignDetailPr
       </Card>
 
       {/* AI Processing Status */}
-      {campaign.ai_enabled && (stats.ai_pending > 0 || stats.ai_processed > 0) && (
+      {campaign.ai_enabled && ((stats.ai_pending ?? 0) > 0 || (stats.ai_processed ?? 0) > 0) && (
         <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -307,7 +307,7 @@ export function CampaignDetail({ campaign, stats, todayCount }: CampaignDetailPr
                 <span>In Progress</span>
                 <span className="font-medium text-blue-600">{stats.ai_pending || 0}</span>
               </div>
-              {stats.ai_failed > 0 && (
+              {(stats.ai_failed ?? 0) > 0 && (
                 <div className="flex justify-between text-sm">
                   <span>Failed</span>
                   <span className="font-medium text-red-600">{stats.ai_failed}</span>

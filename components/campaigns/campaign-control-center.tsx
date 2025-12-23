@@ -45,9 +45,10 @@ import { createClient } from '@/lib/supabase/client';
 
 interface CampaignControlCenterProps {
   campaignId: string;
+  onStatusChange?: (status: string) => void;
 }
 
-export function CampaignControlCenter({ campaignId }: CampaignControlCenterProps) {
+export default function CampaignControlCenter({ campaignId, onStatusChange }: CampaignControlCenterProps) {
   const [campaign, setCampaign] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);

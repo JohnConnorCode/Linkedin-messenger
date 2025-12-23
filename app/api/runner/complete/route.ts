@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServiceRoleClient();
+    const supabase = await createServiceRoleClient();
 
     // Get current task details
     const { data: task } = (await supabase

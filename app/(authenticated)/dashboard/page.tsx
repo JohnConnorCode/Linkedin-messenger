@@ -19,7 +19,11 @@ import {
   ArrowRight,
   Brain,
   Sparkles,
-  DollarSign
+  DollarSign,
+  Flame,
+  UserCheck,
+  Megaphone,
+  Bell
 } from 'lucide-react';
 
 export default async function DashboardPage() {
@@ -141,6 +145,32 @@ export default async function DashboardPage() {
 
   const pendingTasks = taskStats?.filter(t => t.status === 'pending').length || 0;
   const processingTasks = taskStats?.filter(t => t.status === 'processing').length || 0;
+
+  // Get SuperDebate escalations (high-value prospects needing attention)
+  const { data: escalations } = await supabase
+    .from('notifications')
+    .select(`
+      *,
+      metadata
+    `)
+    .eq('user_id', user?.id)
+    .eq('type', 'approval_needed')
+    .is('read_at', null)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  // Get SuperDebate stats
+  const { data: superDebateTargets } = await supabase
+    .from('campaign_targets')
+    .select('audience_type, temperature, conversation_stage')
+    .not('audience_type', 'is', null);
+
+  const superDebateStats = {
+    total: superDebateTargets?.length || 0,
+    funders: superDebateTargets?.filter(t => t.audience_type === 'funder').length || 0,
+    hot: superDebateTargets?.filter(t => t.temperature === 'hot').length || 0,
+    inDialogue: superDebateTargets?.filter(t => t.conversation_stage === 'in_dialogue').length || 0,
+  };
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -294,6 +324,90 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* SuperDebate Escalations */}
+      {(escalations && escalations.length > 0) || superDebateStats.total > 0 ? (
+        <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-orange-600" />
+                  SuperDebate Outreach
+                </CardTitle>
+                <CardDescription>
+                  AI-powered audience targeting and personalization
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                {escalations && escalations.length > 0 && (
+                  <Badge className="bg-orange-500 text-white animate-pulse">
+                    <Bell className="h-3 w-3 mr-1" />
+                    {escalations.length} Need Attention
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Stats Row */}
+            <div className="grid grid-cols-4 gap-4 mb-4">
+              <div className="text-center p-3 bg-white/50 rounded-lg">
+                <p className="text-2xl font-bold text-purple-600">{superDebateStats.total}</p>
+                <p className="text-xs text-muted-foreground">Classified</p>
+              </div>
+              <div className="text-center p-3 bg-white/50 rounded-lg">
+                <div className="flex items-center justify-center gap-1">
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                  <p className="text-2xl font-bold text-green-600">{superDebateStats.funders}</p>
+                </div>
+                <p className="text-xs text-muted-foreground">Funders</p>
+              </div>
+              <div className="text-center p-3 bg-white/50 rounded-lg">
+                <div className="flex items-center justify-center gap-1">
+                  <Flame className="h-4 w-4 text-red-500" />
+                  <p className="text-2xl font-bold text-red-500">{superDebateStats.hot}</p>
+                </div>
+                <p className="text-xs text-muted-foreground">Hot Leads</p>
+              </div>
+              <div className="text-center p-3 bg-white/50 rounded-lg">
+                <div className="flex items-center justify-center gap-1">
+                  <MessageSquare className="h-4 w-4 text-blue-600" />
+                  <p className="text-2xl font-bold text-blue-600">{superDebateStats.inDialogue}</p>
+                </div>
+                <p className="text-xs text-muted-foreground">In Dialogue</p>
+              </div>
+            </div>
+
+            {/* Escalations List */}
+            {escalations && escalations.length > 0 && (
+              <div className="space-y-2 mt-4 pt-4 border-t">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  High-Priority Responses
+                </p>
+                {escalations.slice(0, 3).map((notification: any) => (
+                  <div key={notification.id} className="flex items-center justify-between p-2 bg-white/70 rounded-lg text-sm">
+                    <div>
+                      <p className="font-medium">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-md">
+                        {notification.body}
+                      </p>
+                    </div>
+                    {notification.metadata?.campaign_id && (
+                      <Link href={`/campaigns/${notification.metadata.campaign_id}`}>
+                        <Button size="sm" variant="ghost">
+                          View <ArrowRight className="h-3 w-3 ml-1" />
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

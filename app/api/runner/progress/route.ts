@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServiceRoleClient();
+    const supabase = await createServiceRoleClient();
 
     // Insert log entry
     const { error } = await supabase.from('send_logs').insert({

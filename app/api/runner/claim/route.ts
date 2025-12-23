@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid runner token' }, { status: 401 });
     }
 
-    const supabase = createServiceRoleClient();
+    const supabase = await createServiceRoleClient();
 
     // Call the claim_next_task function using safe wrapper
     const { data: tasks, error } = await safeClaimNextTask(supabase, runnerId, true);

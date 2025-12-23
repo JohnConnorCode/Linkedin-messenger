@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { status, metrics } = body;
 
-    const supabase = createServiceRoleClient();
+    const supabase = await createServiceRoleClient();
 
     // Update runner status using safe wrapper
     const { error: updateError } = await safeRunnerStatusUpsert(supabase, {

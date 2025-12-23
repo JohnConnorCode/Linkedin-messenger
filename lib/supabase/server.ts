@@ -54,6 +54,9 @@ export async function createServerActionClient() {
   );
 }
 
+// Alias for API routes that expect createClient
+export const createClient = createServerComponentClient;
+
 export async function createServiceRoleClient() {
   const cookieStore = await cookies();
 

@@ -54,6 +54,67 @@ const metrics = {
 };
 
 /**
+ * Create deterministic canonical string for signing
+ * Sorts keys to ensure consistent ordering across JS engines
+ */
+function createCanonicalString(payload, timestamp) {
+  const sortedPayload = sortObjectKeys({ ...payload, _timestamp: timestamp });
+  return JSON.stringify(sortedPayload);
+}
+
+/**
+ * Recursively sort object keys for deterministic serialization
+ */
+function sortObjectKeys(obj) {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(sortObjectKeys);
+  }
+  return Object.keys(obj)
+    .sort()
+    .reduce((sorted, key) => {
+      sorted[key] = sortObjectKeys(obj[key]);
+      return sorted;
+    }, {});
+}
+
+/**
+ * Sign request payload with HMAC-SHA256 for secure API communication
+ * Uses deterministic key ordering to prevent signature mismatches
+ */
+function signRequest(payload) {
+  const secret = config.runnerSharedSecret;
+  if (!secret) {
+    throw new Error('RUNNER_SHARED_SECRET is required for secure API communication');
+  }
+
+  const timestamp = Date.now();
+  const canonicalString = createCanonicalString(payload, timestamp);
+
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(canonicalString)
+    .digest('hex');
+
+  return `${timestamp}.${signature}`;
+}
+
+/**
+ * Create headers for signed API request
+ * SECURITY: Only uses HMAC signature, no service key in headers
+ */
+function createSignedHeaders(payload) {
+  return {
+    'Content-Type': 'application/json',
+    'X-Signature': signRequest(payload),
+    'X-Runner-ID': config.runnerId
+    // NOTE: Service key removed - use HMAC signature only
+  };
+}
+
+/**
  * Generate JWT for API authentication
  */
 function generateToken() {
@@ -119,66 +180,119 @@ async function initialize() {
 }
 
 /**
- * Claim a task from the queue
+ * Defer a task to run later (e.g., during quiet hours)
+ * Sets status to 'deferred' with a scheduled run time
+ */
+async function deferTask(taskId, reason) {
+  try {
+    // Calculate when to run next (after quiet hours end, or default 8 hours)
+    const runAfter = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+
+    const { error } = await supabase
+      .from('task_queue')
+      .update({
+        status: 'deferred',
+        run_after: runAfter,
+        runner_id: null,
+        claimed_at: null,
+        error_message: `Deferred: ${reason}`,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', taskId);
+
+    if (error) {
+      logger.error('Failed to defer task:', { taskId, error });
+    } else {
+      logger.info('Task deferred:', { taskId, reason, runAfter });
+    }
+  } catch (err) {
+    logger.error('Exception deferring task:', { taskId, err });
+  }
+}
+
+/**
+ * Release a claimed task back to pending state
+ * Called when we fail to fetch details after claiming
+ */
+async function releaseTask(taskId, reason) {
+  try {
+    const { error } = await supabase
+      .from('task_queue')
+      .update({
+        status: 'pending',
+        runner_id: null,
+        claimed_at: null,
+        error_message: `Released: ${reason}`
+      })
+      .eq('id', taskId);
+
+    if (error) {
+      logger.error('Failed to release task:', { taskId, error });
+    } else {
+      logger.info('Task released back to queue:', { taskId, reason });
+    }
+  } catch (err) {
+    logger.error('Exception releasing task:', { taskId, err });
+  }
+}
+
+/**
+ * Fetch full task details with all relations
+ * If fetch fails, releases the task back to the queue
+ */
+async function fetchFullTaskDetails(taskId) {
+  const { data: fullTask, error } = await supabase
+    .from('task_queue')
+    .select(`
+      *,
+      campaigns(
+        *,
+        message_templates(*),
+        user_settings(*)
+      ),
+      campaign_targets(
+        *,
+        connections(*)
+      )
+    `)
+    .eq('id', taskId)
+    .single();
+
+  if (error) {
+    logger.error('Error fetching task details:', error);
+    // Release the task so it can be claimed again
+    await releaseTask(taskId, `Fetch failed: ${error.message}`);
+    return null;
+  }
+
+  return fullTask;
+}
+
+/**
+ * Claim a task from the queue using atomic RPC with FOR UPDATE SKIP LOCKED
+ * This prevents race conditions when multiple runners are active
+ *
+ * SECURITY: No fallback to legacy RPC - prevents race condition where
+ * two runners could claim the same task via different RPC signatures
  */
 async function claimTask() {
   try {
-    // Check rate limits first
-    const { data: { user } } = await supabase.auth.admin.listUsers();
-
-    // Use Supabase RPC to claim task atomically - with fallback for schema mismatch
-    let tasks, error;
-
-    try {
-      const result = await supabase
-        .rpc('claim_next_task', {
-          p_runner_id: config.runnerId,
-          p_rate_limits_ok: true
-        });
-      tasks = result.data;
-      error = result.error;
-    } catch (rpcError) {
-      // If function doesn't exist or has wrong signature, fall back to manual claiming
-      logger.warn('claim_next_task RPC failed, using fallback:', rpcError.message);
-
-      const fallbackResult = await supabase
-        .from('task_queue')
-        .select('*')
-        .eq('status', 'pending')
-        .is('claimed_at', null)
-        .order('created_at', { ascending: true })
-        .limit(1);
-
-      if (fallbackResult.data && fallbackResult.data.length > 0) {
-        const task = fallbackResult.data[0];
-
-        // Try to claim it
-        const updateResult = await supabase
-          .from('task_queue')
-          .update({
-            status: 'processing',
-            runner_id: config.runnerId,
-            claimed_at: new Date().toISOString(),
-            started_at: new Date().toISOString()
-          })
-          .eq('id', task.id)
-          .eq('status', 'pending'); // Ensure it's still pending
-
-        if (!updateResult.error) {
-          tasks = [task];
-          error = null;
-        } else {
-          tasks = [];
-          error = updateResult.error;
-        }
-      } else {
-        tasks = [];
-        error = fallbackResult.error;
-      }
-    }
+    // Use atomic RPC to claim task - prevents race conditions
+    const { data: tasks, error } = await supabase.rpc('claim_next_task', {
+      p_runner_id: config.runnerId
+    });
 
     if (error) {
-      logger.error('Error claiming task:', error);
+      // SECURITY: No fallback - if RPC doesn't exist, fail cleanly
+      // This prevents race conditions from multiple RPC versions
+      if (error.message?.includes('function') || error.code === '42883') {
+        logger.error('claim_next_task RPC not found. Please run database migrations.', {
+          code: error.code,
+          hint: 'Run: supabase db push or apply migration 20251222_critical_fixes.sql'
+        });
+      } else {
+        logger.error('Error claiming task:', error);
+      }
       return null;
     }
 
@@ -188,26 +302,10 @@ async function claimTask() {
 
     const task = tasks[0];
 
-    // Fetch full task details with relations
-    const { data: fullTask } = await supabase
-      .from('task_queue')
-      .select(`
-        *,
-        campaigns(
-          *,
-          message_templates(*),
-          user_settings(*)
-        ),
-        campaign_targets(
-          *,
-          connections(*)
-        )
-      `)
-      .eq('id', task.task_id)
-      .single();
-
-    logger.info('Task claimed:', { taskId: task.task_id });
-    return fullTask;
+    // Fetch full task details using helper
+    const taskId = task.id || task.task_id;
+    logger.info('Task claimed:', { taskId });
+    return await fetchFullTaskDetails(taskId);
   } catch (error) {
     logger.error('Error claiming task:', error);
     return null;
@@ -224,19 +322,77 @@ async function processTask(task) {
   let result = null;
 
   try {
-    // Extract task details
-    const connection = task.campaign_targets.connections;
-    const template = task.campaigns.message_templates;
+    // Extract task details with NULL checks
+    const target = task.campaign_targets;
     const campaign = task.campaigns;
 
-    // Render message with template variables
-    const message = renderTemplate(template.body, {
-      first_name: connection.first_name,
-      last_name: connection.last_name,
-      company: connection.company,
-      headline: connection.headline,
-      // Add more variables as needed
-    });
+    if (!target || !campaign) {
+      logger.error('Task missing required relations', {
+        taskId: task.id,
+        hasTarget: !!target,
+        hasCampaign: !!campaign
+      });
+      await markTaskFailed(task.id, 'Missing campaign_targets or campaigns relation', true);
+      return;
+    }
+
+    const connection = target.connections;
+    const template = campaign.message_templates;
+
+    if (!connection) {
+      logger.error('Target missing connection relation', {
+        taskId: task.id,
+        targetId: target.id
+      });
+      await markTaskFailed(task.id, 'Missing connection relation on target', true);
+      return;
+    }
+
+    // Determine which message to use
+    let message;
+
+    // Priority 1: Use existing personalized_message if already generated
+    if (target.personalized_message) {
+      message = target.personalized_message;
+      logger.info('Using existing personalized message');
+    }
+    // Priority 2: Use SuperDebate if enabled on campaign
+    else if (campaign.superdebate_enabled) {
+      logger.info('Generating SuperDebate message...');
+      const superDebate = await generateSuperDebateMessage(connection, campaign, target.id);
+
+      if (superDebate.success && superDebate.message) {
+        message = superDebate.message;
+
+        // Check if escalation is needed (high-value prospect)
+        if (superDebate.meta?.shouldEscalate) {
+          logger.info('High-value prospect detected, flagging for review', {
+            reason: superDebate.meta.escalateReason,
+            audienceType: superDebate.classification?.primary
+          });
+          // Optionally pause for manual approval
+          // For now, just log it - could be enhanced to require approval
+        }
+      } else {
+        // Fallback to template if SuperDebate fails
+        logger.warn('SuperDebate failed, falling back to template');
+        message = renderTemplate(template?.body || '', {
+          first_name: connection.first_name,
+          last_name: connection.last_name,
+          company: connection.company,
+          headline: connection.headline,
+        });
+      }
+    }
+    // Priority 3: Use basic template rendering
+    else {
+      message = renderTemplate(template?.body || '', {
+        first_name: connection.first_name,
+        last_name: connection.last_name,
+        company: connection.company,
+        headline: connection.headline,
+      });
+    }
 
     // Check quiet hours
     if (isInQuietHours(campaign.quiet_hours)) {
@@ -252,7 +408,7 @@ async function processTask(task) {
     // Process with LinkedIn Runner
     result = await linkedInRunner.processTask({
       profileUrl: connection.linkedin_url,
-      message: task.campaign_targets.personalized_body || message,
+      message: message,
       connectionName: connection.full_name
     });
 
@@ -265,17 +421,42 @@ async function processTask(task) {
     const screenshotUrls = await uploadScreenshots(result.screenshots);
 
     if (result.success) {
-      await markTaskSuccess(task.id, {
-        sentAt: result.sentAt,
-        screenshots: screenshotUrls,
-        selectorVersion: result.selectorVersion
-      });
+      // ATOMIC: All post-send updates in one transaction
+      // Prevents partial state if any update fails
+      const { data: atomicResult, error: atomicError } = await supabase.rpc(
+        'mark_task_success_atomic',
+        {
+          p_task_id: task.id,
+          p_screenshot_url: screenshotUrls?.afterSend || null,
+          p_sent_at: result.sentAt || new Date().toISOString()
+        }
+      );
 
-      // Update connection last messaged
-      await updateConnectionLastMessaged(connection.id);
-
-      // Increment rate limit counter
-      await incrementRateLimit(task.user_id);
+      if (atomicError) {
+        logger.error('Atomic task success failed:', atomicError);
+        // Fall back to non-atomic if RPC doesn't exist yet
+        if (atomicError.code === '42883') {
+          logger.warn('mark_task_success_atomic RPC not found, using fallback');
+          await markTaskSuccess(task.id, {
+            sentAt: result.sentAt,
+            screenshots: screenshotUrls,
+            selectorVersion: result.selectorVersion
+          });
+          await updateConnectionLastMessaged(connection.id);
+          await updateTargetSentAt(target.id);
+          await incrementRateLimit(task.user_id);
+        } else {
+          throw new Error(`Atomic update failed: ${atomicError.message}`);
+        }
+      } else if (!atomicResult?.success) {
+        logger.error('Atomic task success returned failure:', atomicResult?.error);
+        throw new Error(`Atomic update failed: ${atomicResult?.error || 'Unknown error'}`);
+      } else {
+        logger.info('Task success recorded atomically', {
+          taskId: task.id,
+          targetId: atomicResult.target_id
+        });
+      }
 
       metrics.tasksSucceeded++;
     } else {
@@ -330,13 +511,28 @@ async function markTaskSuccess(taskId, metadata) {
  * Mark task as failed
  */
 async function markTaskFailed(taskId, errorMessage, needsIntervention) {
-  const { data: task } = await supabase
+  const { data: task, error: fetchError } = await supabase
     .from('task_queue')
     .select('attempt, max_retries')
     .eq('id', taskId)
     .single();
 
-  const shouldRetry = !needsIntervention && task.attempt < task.max_retries;
+  if (fetchError || !task) {
+    logger.error('Failed to fetch task for retry check:', { taskId, fetchError });
+    // Mark as failed without retry since we can't determine state
+    await supabase
+      .from('task_queue')
+      .update({
+        status: 'failed',
+        last_error: errorMessage,
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', taskId);
+    return;
+  }
+
+  const shouldRetry = !needsIntervention && (task.attempt || 0) < (task.max_retries || 3);
 
   if (shouldRetry) {
     // Calculate next retry time with exponential backoff
@@ -595,7 +791,8 @@ function isInQuietHours(quietHours) {
 }
 
 /**
- * Calculate exponential backoff
+ * Calculate exponential backoff with jitter
+ * Jitter prevents thundering herd when many tasks fail at once
  */
 function calculateBackoff(attempt) {
   const delays = [
@@ -605,7 +802,11 @@ function calculateBackoff(attempt) {
     24 * 60 * 60 * 1000  // 24 hours
   ];
 
-  const delay = delays[Math.min(attempt, delays.length - 1)];
+  const baseDelay = delays[Math.min(attempt || 0, delays.length - 1)];
+  // Add +/- 20% jitter to prevent thundering herd
+  const jitter = baseDelay * 0.2 * (Math.random() * 2 - 1);
+  const delay = Math.round(baseDelay + jitter);
+
   return new Date(Date.now() + delay).toISOString();
 }
 
@@ -649,6 +850,25 @@ async function updateConnectionLastMessaged(connectionId) {
 }
 
 /**
+ * Update campaign target sent_at (critical for follow-up scheduling)
+ */
+async function updateTargetSentAt(targetId) {
+  const { error } = await supabase
+    .from('campaign_targets')
+    .update({
+      sent_at: new Date().toISOString(),
+      status: 'sent',
+      messaged_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', targetId);
+
+  if (error) {
+    logger.error('Error updating target sent_at:', error);
+  }
+}
+
+/**
  * Increment rate limit counter
  */
 async function incrementRateLimit(userId) {
@@ -668,6 +888,61 @@ async function incrementRateLimit(userId) {
  */
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Generate message using SuperDebate AI service
+ */
+async function generateSuperDebateMessage(connection, campaign, targetId) {
+  try {
+    const webappUrl = process.env.WEBAPP_URL || 'http://localhost:3000';
+
+    const payload = {
+      connectionId: connection.id,
+      campaignId: campaign.id,
+      profileData: {
+        name: connection.full_name,
+        headline: connection.headline,
+        company: connection.company,
+        title: connection.headline?.split(' at ')?.[0] || connection.headline,
+        about: connection.about || '',
+        location: connection.location,
+        skills: connection.skills || [],
+        linkedinUrl: connection.linkedin_url,
+      }
+    };
+
+    const response = await axios.post(
+      `${webappUrl}/api/superdebate/generate`,
+      payload,
+      {
+        headers: createSignedHeaders(payload),
+        timeout: 30000
+      }
+    );
+
+    if (response.data?.success) {
+      logger.info('SuperDebate message generated', {
+        connectionId: connection.id,
+        audienceType: response.data.classification?.primary,
+        confidence: response.data.classification?.confidence,
+        isUnique: response.data.message?.isUnique
+      });
+
+      return {
+        success: true,
+        message: response.data.message.full,
+        classification: response.data.classification,
+        meta: response.data.meta
+      };
+    }
+
+    logger.warn('SuperDebate generation failed', { response: response.data });
+    return { success: false, message: null };
+  } catch (error) {
+    logger.error('SuperDebate API error:', error.message);
+    return { success: false, message: null, error: error.message };
+  }
 }
 
 /**

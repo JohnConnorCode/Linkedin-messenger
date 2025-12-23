@@ -15,7 +15,7 @@ export async function GET() {
 
   try {
     // Check database connection
-    const supabase = createServiceRoleClient();
+    const supabase = await createServiceRoleClient();
     const { error } = await supabase
       .from('campaigns')
       .select('count')
