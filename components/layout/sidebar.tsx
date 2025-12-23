@@ -18,6 +18,7 @@ import {
   Rocket,
   BookOpen,
   Sparkles,
+  Mic2,
 } from 'lucide-react';
 
 const navigation = [
@@ -29,6 +30,7 @@ const navigation = [
   { name: 'Connections', href: '/connections', icon: Users },
   { name: 'Templates', href: '/templates', icon: FileText },
   { name: 'Campaigns', href: '/campaigns', icon: Send },
+  { name: 'SuperDebate', href: '/superdebate', icon: Mic2 },
   { name: 'AI Approval Queue', href: '/ai-approval', icon: CheckCircle },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Runner', href: '/run', icon: Plug2 },
