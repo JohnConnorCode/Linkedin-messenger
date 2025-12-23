@@ -127,8 +127,9 @@ export default function CampaignControlCenter({ campaignId, onStatusChange }: Ca
       setIsPaused(campaignData.status === 'paused');
 
       // Load saved settings
-      if (campaignData.settings) {
-        setSettings(prev => ({ ...prev, ...campaignData.settings }));
+      if (campaignData.settings && typeof campaignData.settings === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setSettings(prev => ({ ...prev, ...(campaignData.settings as any) }));
       }
     }
 
@@ -150,10 +151,10 @@ export default function CampaignControlCenter({ campaignId, onStatusChange }: Ca
       setStats({
         totalMessages: messages.length,
         sentToday: messages.filter(m =>
-          m.status === 'completed' && new Date(m.created_at) > todayStart
+          m.status === 'completed' && m.created_at && new Date(m.created_at) > todayStart
         ).length,
         sentThisHour: messages.filter(m =>
-          m.status === 'completed' && new Date(m.created_at) > hourStart
+          m.status === 'completed' && m.created_at && new Date(m.created_at) > hourStart
         ).length,
         pendingMessages: messages.filter(m => m.status === 'pending').length,
         failedMessages: messages.filter(m => m.status === 'failed').length,
@@ -193,13 +194,15 @@ export default function CampaignControlCenter({ campaignId, onStatusChange }: Ca
     if (stats.failedMessages > 10) systemHealth = 'critical';
     else if (stats.failedMessages > 5) systemHealth = 'degraded';
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const status = runnerStatus as any;
     setLiveStats({
       messagesPerMinute,
       currentQueue: stats.pendingMessages,
       estimatedCompletion,
       systemHealth,
-      linkedInStatus: runnerStatus?.linkedin_connected ? 'connected' : 'disconnected',
-      lastActivity: runnerStatus?.last_activity ? new Date(runnerStatus.last_activity) : new Date()
+      linkedInStatus: status?.linkedin_connected ? 'connected' : 'disconnected',
+      lastActivity: status?.last_activity ? new Date(status.last_activity) : new Date()
     });
   };
 

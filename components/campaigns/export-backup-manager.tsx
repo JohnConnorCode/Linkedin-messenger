@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, Upload, Archive, FileJson, FileText, Shield, CheckCircle } from 'lucide-react';
+import { Download, Archive, Shield, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnySupabase = any;
 
 interface ExportBackupManagerProps {
   campaignId: string;
@@ -18,8 +21,10 @@ export default function ExportBackupManager({ campaignId, campaignName }: Export
   const [exportScope, setExportScope] = useState<ExportScope>('all');
   const [isExporting, setIsExporting] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [backupHistory, setBackupHistory] = useState<any[]>([]);
   const supabase = createClient();
+  const { toast } = useToast();
 
   const exportData = async () => {
     setIsExporting(true);
@@ -47,23 +52,24 @@ export default function ExportBackupManager({ campaignId, campaignName }: Export
       if (exportScope === 'all' || exportScope === 'messages') {
         const { data: messages } = await supabase
           .from('task_queue')
-          .select('*, ai_personalization_queue(*)')
+          .select('*')
           .eq('campaign_id', campaignId);
         data.messages = messages;
 
-        const { data: logs } = await supabase
-          .from('message_log')
+        // Get AI queue data
+        const { data: aiQueue } = await supabase
+          .from('ai_personalization_queue')
           .select('*')
           .eq('campaign_id', campaignId);
-        data.messageLogs = logs;
+        data.aiQueue = aiQueue;
       }
 
       if (exportScope === 'all' || exportScope === 'analytics') {
-        const { data: analytics } = await supabase
-          .from('campaign_analytics')
+        const { data: stats } = await supabase
+          .from('campaign_stats')
           .select('*')
           .eq('campaign_id', campaignId);
-        data.analytics = analytics;
+        data.stats = stats;
       }
 
       // Format data based on selected format
@@ -100,13 +106,13 @@ export default function ExportBackupManager({ campaignId, campaignName }: Export
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-      toast.success(`Data exported as ${filename}`);
+      toast({ title: 'Success', description: `Data exported as ${filename}` });
 
-      // Log export activity
-      await supabase.from('activity_logs').insert({
-        type: 'export',
+      // Log export activity in analytics_events table
+      await (supabase as AnySupabase).from('analytics_events').insert({
+        event_type: 'export',
         campaign_id: campaignId,
-        metadata: {
+        event_data: {
           format: exportFormat,
           scope: exportScope,
           filename,
@@ -115,7 +121,7 @@ export default function ExportBackupManager({ campaignId, campaignName }: Export
       });
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Failed to export data');
+      toast({ title: 'Error', description: 'Failed to export data', variant: 'destructive' });
     } finally {
       setIsExporting(false);
     }
@@ -167,31 +173,32 @@ export default function ExportBackupManager({ campaignId, campaignName }: Export
 
       if (uploadError) throw uploadError;
 
-      // Save backup metadata
-      const { data: backup, error: dbError } = await supabase
+      // Save backup metadata - store path and counts in backup_data JSON field
+      const { error: dbError } = await supabase
         .from('campaign_backups')
         .insert({
           campaign_id: campaignId,
-          backup_path: fileName,
-          size_bytes: new Blob([backupJson]).size,
-          record_counts: {
-            targets: targets?.length || 0,
-            messages: messages?.length || 0,
-            aiQueue: aiQueue?.length || 0,
+          backup_type: 'manual',
+          backup_data: {
+            path: fileName,
+            size_bytes: new Blob([backupJson]).size,
+            record_counts: {
+              targets: targets?.length || 0,
+              messages: messages?.length || 0,
+              aiQueue: aiQueue?.length || 0,
+            },
           },
-        })
-        .select()
-        .single();
+        });
 
       if (dbError) throw dbError;
 
-      toast.success('Backup created successfully');
+      toast({ title: 'Success', description: 'Backup created successfully' });
       
       // Refresh backup history
       loadBackupHistory();
     } catch (error) {
       console.error('Backup error:', error);
-      toast.error('Failed to create backup');
+      toast({ title: 'Error', description: 'Failed to create backup', variant: 'destructive' });
     } finally {
       setIsBackingUp(false);
     }
@@ -211,23 +218,30 @@ export default function ExportBackupManager({ campaignId, campaignName }: Export
 
       if (!backup) throw new Error('Backup not found');
 
+      // Get path from backup_data JSON field
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const backupInfo = backup.backup_data as any;
+      const backupPath = backupInfo?.path;
+
+      if (!backupPath) throw new Error('Backup path not found');
+
       // Download backup file
       const { data: fileData, error: downloadError } = await supabase.storage
         .from('campaign-backups')
-        .download(backup.backup_path);
+        .download(backupPath);
 
       if (downloadError) throw downloadError;
 
-      const backupData = JSON.parse(await fileData.text());
+      const restoredData = JSON.parse(await fileData.text());
 
       // Restore data (would need transaction support for production)
       // This is a simplified version
-      toast.info('Restoring backup...');
+      toast({ title: 'Info', description: 'Restoring backup...' });
 
       // Update campaign
       await supabase
         .from('campaigns')
-        .update(backupData.campaign)
+        .update(restoredData.campaign)
         .eq('id', campaignId);
 
       // Clear and restore targets
@@ -236,16 +250,16 @@ export default function ExportBackupManager({ campaignId, campaignName }: Export
         .delete()
         .eq('campaign_id', campaignId);
 
-      if (backupData.targets?.length > 0) {
+      if (restoredData.targets?.length > 0) {
         await supabase
           .from('campaign_targets')
-          .insert(backupData.targets);
+          .insert(restoredData.targets);
       }
 
-      toast.success('Backup restored successfully');
+      toast({ title: 'Success', description: 'Backup restored successfully' });
     } catch (error) {
       console.error('Restore error:', error);
-      toast.error('Failed to restore backup');
+      toast({ title: 'Error', description: 'Failed to restore backup', variant: 'destructive' });
     }
   };
 
@@ -260,12 +274,14 @@ export default function ExportBackupManager({ campaignId, campaignName }: Export
     if (data) setBackupHistory(data);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convertToCSV = (data: any) => {
     // Simplified CSV conversion - in production, use a library like papaparse
     if (data.targets) {
       const headers = Object.keys(data.targets[0] || {}).join(',');
-      const rows = data.targets.map((row: any) => 
-        Object.values(row).map(v => 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rows = data.targets.map((row: any) =>
+        Object.values(row).map(v =>
           typeof v === 'string' && v.includes(',') ? `"${v}"` : v
         ).join(',')
       );
@@ -274,9 +290,10 @@ export default function ExportBackupManager({ campaignId, campaignName }: Export
     return '';
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convertToExcel = (data: any) => {
     // In production, use a library like xlsx
-    toast.info('Excel export requires additional setup. Using CSV instead.');
+    toast({ title: 'Info', description: 'Excel export requires additional setup. Using CSV instead.' });
     return convertToCSV(data);
   };
 

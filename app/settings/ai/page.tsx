@@ -68,7 +68,8 @@ export default function AISettingsPage() {
     if (!user) return;
 
     // Load AI config
-    const { data: config } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: config } = await (supabase as any)
       .from('ai_model_config')
       .select('*')
       .eq('user_id', user.id)
@@ -76,37 +77,38 @@ export default function AISettingsPage() {
 
     if (config) {
       setSettings({
-        enabled: config.enabled,
+        enabled: config.enabled ?? true,
         model: config.model_name || 'gpt-5-nano',
-        defaultTone: config.default_tone,
-        defaultTemperature: config.default_temperature,
-        maxTokens: config.max_tokens,
-        dailyLimit: config.daily_limit,
-        hourlyLimit: config.hourly_limit,
-        minConfidenceScore: config.min_confidence_score,
-        autoApproveThreshold: config.auto_approve_threshold,
-        requireManualReview: config.require_manual_review,
+        defaultTone: config.default_tone ?? 'professional',
+        defaultTemperature: config.default_temperature ?? 0.3,
+        maxTokens: config.max_tokens ?? 500,
+        dailyLimit: config.daily_limit ?? 1000,
+        hourlyLimit: config.hourly_limit ?? 100,
+        minConfidenceScore: config.min_confidence_score ?? 0.7,
+        autoApproveThreshold: config.auto_approve_threshold ?? 0.9,
+        requireManualReview: config.require_manual_review ?? false,
         enableCaching: true,
         cacheExpirationDays: 7
       });
 
       setUsage({
-        daily: config.current_daily_usage,
-        hourly: config.current_hourly_usage,
+        daily: config.current_daily_usage ?? 0,
+        hourly: config.current_hourly_usage ?? 0,
         totalCost: 0, // Calculate from logs
         cachedRequests: 0 // Calculate from cache hits
       });
     }
 
     // Load banned phrases
-    const { data: filters } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: filters } = await (supabase as any)
       .from('ai_safety_filters')
       .select('pattern')
       .eq('filter_type', 'banned_phrase')
       .eq('is_active', true);
 
     if (filters) {
-      setBannedPhrases(filters.map(f => f.pattern));
+      setBannedPhrases(filters.map((f: { pattern: string }) => f.pattern));
     }
 
     setLoading(false);
@@ -119,7 +121,8 @@ export default function AISettingsPage() {
     if (!user) return;
 
     // Save AI config
-    const { error: configError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: configError } = await (supabase as any)
       .from('ai_model_config')
       .upsert({
         user_id: user.id,
@@ -155,7 +158,8 @@ export default function AISettingsPage() {
   const addBannedPhrase = async () => {
     if (!newPhrase.trim()) return;
 
-    const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
       .from('ai_safety_filters')
       .insert({
         filter_type: 'banned_phrase',
@@ -176,7 +180,8 @@ export default function AISettingsPage() {
   };
 
   const removeBannedPhrase = async (phrase: string) => {
-    const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
       .from('ai_safety_filters')
       .update({ is_active: false })
       .eq('pattern', phrase);

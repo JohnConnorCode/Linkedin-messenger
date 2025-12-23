@@ -53,18 +53,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Get profile data if available
-    const { data: profileRaw } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profileRaw } = await (supabase as any)
       .from('profile_raw')
       .select('*')
       .eq('connection_id', connectionId)
       .single();
 
-    // Prepare profile data
-    const profileData = profileRaw?.metadata || {
-      name: connection.name,
+    // Prepare profile data - use connection fields as fallback
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawData = profileRaw as any;
+    const profileData = rawData?.metadata || {
+      name: connection.full_name || `${connection.first_name} ${connection.last_name}`,
       headline: connection.headline,
       company: connection.company,
-      title: connection.title
+      title: connection.headline // Use headline as title fallback
     };
 
     // Initialize personalization service
@@ -74,12 +77,14 @@ export async function POST(request: NextRequest) {
     );
 
     // Generate personalization
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const templateData = template as any;
     const personalization = await personalizationService.generatePersonalization({
       profileData,
       templateBody: template.body,
-      tone: tone as any,
-      campaignContext: template.description,
-      variables: template.variables
+      tone: tone as 'professional' | 'casual' | 'friendly' | 'concise' | 'curious',
+      campaignContext: templateData.description || template.subject || '',
+      variables: templateData.variables as Record<string, string> | undefined
     });
 
     // Save to database

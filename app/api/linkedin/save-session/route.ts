@@ -134,15 +134,24 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error saving session:', error);
     return NextResponse.json(
-      { error: 'Failed to save session', details: error.message },
+      { error: 'Failed to save session', details: (error as Error).message },
       { status: 500 }
     );
   }
 }
 
 // Helper function to parse raw cookie string
-function parseCookieString(cookieStr: string) {
-  const cookies = [];
+interface ParsedCookie {
+  name: string;
+  value: string;
+  domain: string;
+  path: string;
+  httpOnly: boolean;
+  secure: boolean;
+}
+
+function parseCookieString(cookieStr: string): { cookies: ParsedCookie[] } {
+  const cookies: ParsedCookie[] = [];
   const pairs = cookieStr.split(';');
 
   pairs.forEach(pair => {

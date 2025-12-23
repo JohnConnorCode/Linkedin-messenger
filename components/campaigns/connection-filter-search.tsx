@@ -6,6 +6,9 @@ import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import debounce from 'lodash/debounce';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRecord = any;
+
 interface ConnectionFilters {
   search: string;
   companies: string[];
@@ -48,6 +51,7 @@ export default function ConnectionFilterSearch({
     tags: [] as string[],
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
@@ -55,6 +59,7 @@ export default function ConnectionFilterSearch({
   const [filteredCount, setFilteredCount] = useState(0);
 
   const supabase = createClient();
+  const { toast } = useToast();
 
   useEffect(() => {
     loadAvailableFilters();
@@ -66,16 +71,20 @@ export default function ConnectionFilterSearch({
   }, [filters]);
 
   const loadAvailableFilters = async () => {
-    const { data: targets } = await supabase
+    // Get targets with their connection data for filter options
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: targets } = await (supabase as any)
       .from('campaign_targets')
-      .select('company_name, position, location, tags')
+      .select('connection:connections(company, headline, location)')
       .eq('campaign_id', campaignId);
 
     if (targets) {
-      const companies = [...new Set(targets.map(t => t.company_name).filter(Boolean))];
-      const positions = [...new Set(targets.map(t => t.position).filter(Boolean))];
-      const locations = [...new Set(targets.map(t => t.location).filter(Boolean))];
-      const tags = [...new Set(targets.flatMap(t => t.tags || []))];
+      const typedTargets = targets as AnyRecord[];
+      const companies = Array.from(new Set(typedTargets.map(t => t.connection?.company).filter(Boolean))) as string[];
+      const positions = Array.from(new Set(typedTargets.map(t => t.connection?.headline).filter(Boolean))) as string[];
+      const locations = Array.from(new Set(typedTargets.map(t => t.connection?.location).filter(Boolean))) as string[];
+      // Tags would come from connection or target metadata if available
+      const tags: string[] = [];
 
       setAvailableFilters({ companies, positions, locations, tags });
     }
@@ -385,7 +394,7 @@ export default function ConnectionFilterSearch({
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  toast.success(`Added ${selectedIds.size} connections to campaign`);
+                  toast({ title: 'Success', description: `Added ${selectedIds.size} connections to campaign` });
                   clearSelection();
                 }}
                 className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
@@ -394,7 +403,7 @@ export default function ConnectionFilterSearch({
               </button>
               <button
                 onClick={() => {
-                  toast.success(`Excluded ${selectedIds.size} connections`);
+                  toast({ title: 'Success', description: `Excluded ${selectedIds.size} connections` });
                   clearSelection();
                 }}
                 className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"

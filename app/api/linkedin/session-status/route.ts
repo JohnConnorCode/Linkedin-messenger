@@ -57,6 +57,6 @@ export async function GET() {
     }
   } catch (error) {
     console.error('Error checking session status:', error);
-    return NextResponse.json({ status: 'error', error: error.message }, { status: 500 });
+    return NextResponse.json({ status: 'error', error: (error as Error).message }, { status: 500 });
   }
 }

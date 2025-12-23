@@ -148,10 +148,11 @@ export async function POST() {
 
   } catch (error) {
     console.error('Connection test failed:', error);
+    const err = error as Error;
     return NextResponse.json({
       success: false,
-      error: error.message || 'Connection test failed',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: err.message || 'Connection test failed',
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   } finally {
     // Clean up

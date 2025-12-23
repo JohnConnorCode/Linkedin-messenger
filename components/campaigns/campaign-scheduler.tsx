@@ -76,12 +76,14 @@ export default function CampaignScheduler({ campaignId, onScheduleUpdate }: Camp
   const loadScheduleSettings = async () => {
     const { data: campaign } = await supabase
       .from('campaigns')
-      .select('schedule_settings')
+      .select('settings')
       .eq('id', campaignId)
       .single();
 
-    if (campaign?.schedule_settings) {
-      setSettings(campaign.schedule_settings);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const campaignData = campaign as any;
+    if (campaignData?.settings?.schedule) {
+      setSettings(campaignData.settings.schedule);
     }
   };
 
@@ -118,7 +120,8 @@ export default function CampaignScheduler({ campaignId, onScheduleUpdate }: Camp
     if (!settings.enabled) return false;
 
     const now = new Date();
-    const today = now.toLocaleDateString('en-US', { weekday: 'lowercase' }) as keyof typeof settings.workingDays;
+    const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const today = weekdays[now.getDay()] as keyof typeof settings.workingDays;
 
     if (!settings.workingDays[today]) return false;
 
