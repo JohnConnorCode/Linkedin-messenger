@@ -4,22 +4,18 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "outputDirectory": ".next",
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
-    "OPENAI_API_KEY": "@openai_api_key",
-    "ENCRYPTION_KEY": "@encryption_key"
-  },
   "functions": {
     "app/api/ai/personalize/route.ts": {
       "maxDuration": 30
     },
     "app/api/campaigns/[id]/approve-messages/route.ts": {
       "maxDuration": 30
+    },
+    "app/api/superdebate/generate/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/superdebate/classify-response/route.ts": {
+      "maxDuration": 30
     }
-  },
-  "github": {
-    "silent": true
   }
 }

@@ -1,0 +1,25 @@
+# Runner directory - local execution only
+runner/
+scripts/
+
+# Session and cache data
+*-sessions/
+*.session
+.playwright/
+
+# Development files
+*.log
+*.local
+.env.local
+.env.*.local
+
+# Test files
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+coverage/
+
+# Documentation
+*.md
+!README.md
