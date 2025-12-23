@@ -35,6 +35,30 @@ type AuthContextFailure = {
 
 type AuthContext = AuthContextSuccess | AuthContextFailure;
 
+// Database result types
+interface ConnectionRow {
+  first_name: string | null;
+  full_name: string | null;
+}
+
+interface TargetRow {
+  sent_at: string | null;
+}
+
+interface FollowUpRow {
+  id: string;
+  follow_up_type: string;
+  scheduled_for: string;
+  message_template: string | null;
+}
+
+interface AtomicResult {
+  success: boolean;
+  follow_up_id?: string;
+  follow_up_count?: number;
+  error?: string;
+}
+
 // Helper to verify auth and create supabase client
 async function getAuthContext(request: NextRequest, body?: object): Promise<AuthContext> {
   const authHeader = request.headers.get('authorization');
@@ -196,11 +220,12 @@ export async function POST(request: NextRequest) {
 
       if (existing) {
         // Return cached result for idempotent retry
+        const cachedFollowUp = existing as FollowUpRow;
         return NextResponse.json({
           success: true,
-          followUp: existing,
+          followUp: cachedFollowUp,
           cached: true,
-          message: existing.message_template,
+          message: cachedFollowUp.message_template,
         });
       }
     }
@@ -246,7 +271,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const firstName = connection?.first_name || connection?.full_name?.split(' ')[0] || 'there';
+    const conn = connection as ConnectionRow | null;
+    const firstName = conn?.first_name || conn?.full_name?.split(' ')[0] || 'there';
 
     // Initialize service
     const service = new SuperDebateOutreachService(
@@ -272,9 +298,10 @@ export async function POST(request: NextRequest) {
     let messageTemplate = customMessage;
     let type = followUpType || 'custom';
 
-    if (!messageTemplate && target?.sent_at) {
+    const tgt = target as TargetRow | null;
+    if (!messageTemplate && tgt?.sent_at) {
       const daysSince = Math.floor(
-        (Date.now() - new Date(target.sent_at).getTime()) / (1000 * 60 * 60 * 24)
+        (Date.now() - new Date(tgt.sent_at).getTime()) / (1000 * 60 * 60 * 24)
       );
       const followUp = service.generateFollowUp(firstName, daysSince);
       if (followUp) {
@@ -297,7 +324,8 @@ export async function POST(request: NextRequest) {
 
     // Use atomic transaction to create follow-up, update count, and log event
     // This prevents race conditions from concurrent requests
-    const { data: atomicResult, error: atomicError } = await dbClient.rpc(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: atomicResult, error: atomicError } = await (dbClient.rpc as any)(
       'create_follow_up_atomic',
       {
         p_campaign_id: campaignId,
@@ -331,21 +359,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Cast to typed result
+    const result = atomicResult as AtomicResult;
+
     // Check if the transaction succeeded
-    if (!atomicResult?.success) {
-      console.error('Atomic follow-up transaction failed:', atomicResult?.error);
+    if (!result?.success) {
+      console.error('Atomic follow-up transaction failed:', result?.error);
       return NextResponse.json(
-        { error: 'Failed to create follow-up', details: atomicResult?.error || 'Unknown error' },
+        { error: 'Failed to create follow-up', details: result?.error || 'Unknown error' },
         { status: 500 }
       );
     }
 
     // Store idempotency key for future deduplication (non-blocking)
-    if (idempotencyKey && atomicResult.follow_up_id) {
-      dbClient
-        .from('follow_up_queue')
+    if (idempotencyKey && result.follow_up_id) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (dbClient.from('follow_up_queue') as any)
         .update({ idempotency_key: idempotencyKey })
-        .eq('id', atomicResult.follow_up_id)
+        .eq('id', result.follow_up_id)
         .then(({ error }: { error: Error | null }) => {
           if (error) console.warn('Failed to store idempotency key:', error);
         });
@@ -354,12 +385,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       followUp: {
-        id: atomicResult.follow_up_id,
+        id: result.follow_up_id,
         follow_up_type: type,
         scheduled_for: scheduledFor.toISOString(),
         message_template: messageTemplate,
       },
-      followUpCount: atomicResult.follow_up_count,
+      followUpCount: result.follow_up_count,
       message: messageTemplate,
     });
   } catch (error) {

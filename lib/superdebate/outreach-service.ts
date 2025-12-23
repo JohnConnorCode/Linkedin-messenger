@@ -180,8 +180,9 @@ export const MESSAGE_TEMPLATES = {
 
 export class SuperDebateOutreachService {
   private supabase: SupabaseClient;
-  // Message hashes now persisted to database instead of in-memory Set
-  // This survives API restarts and serverless cold starts
+  // Message hashes persisted to database, with in-memory fallback
+  // In-memory Set used when database table doesn't exist (graceful degradation)
+  private sentMessageHashes: Set<string> = new Set();
   private currentCampaignId: string | null = null;
 
   constructor(supabaseUrl: string, supabaseKey: string) {
