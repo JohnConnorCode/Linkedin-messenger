@@ -915,6 +915,15 @@ Return JSON:
           // Hash already exists - not an error, just means we didn't claim it
           return { claimed: false, error: null };
         }
+        // Table doesn't exist - fallback to in-memory dedup (graceful degradation)
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          console.warn('sent_message_hashes table missing - using in-memory dedup');
+          if (this.sentMessageHashes.has(messageHash)) {
+            return { claimed: false, error: null };
+          }
+          this.sentMessageHashes.add(messageHash);
+          return { claimed: true, error: null };
+        }
         console.error('Failed to claim message hash:', error);
         return { claimed: false, error: new Error(error.message) };
       }
@@ -980,6 +989,12 @@ Return JSON:
         .select('hash')
         .eq('campaign_id', campaignId)
         .limit(1);
+
+      // Table doesn't exist - graceful degradation
+      if (hashCheckError?.code === '42P01' || hashCheckError?.message?.includes('does not exist')) {
+        console.warn('sent_message_hashes table missing - using in-memory dedup only');
+        return;
+      }
 
       // If no hashes exist for this campaign, migrate from campaign_targets
       if (!hashCheckError && (!existingHashes || existingHashes.length === 0)) {
